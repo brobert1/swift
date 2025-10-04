@@ -179,7 +179,7 @@ struct AppSelectionView: View {
             let app = MonitoredApp(
                 id: appId,
                 token: token,
-                timeLimitInMinutes: 1, // Set to 1 minute for testing
+                timeLimitInMinutes: 1, // Default: 1 min for testing (change to 25 for production)
                 isEnabled: true
             )
             apps.append(app)
@@ -192,6 +192,24 @@ struct AppSelectionView: View {
 
 struct AppRowView: View {
     @Binding var app: MonitoredApp
+
+    // Available time limits in minutes
+    let timeLimitOptions = [1, 15, 30, 45, 60, 120, 300, 600, 1440] // 1min, 15min, 30min, 45min, 1h, 2h, 5h, 10h, 24h
+
+    var timeLimitDisplay: String {
+        if app.timeLimitInMinutes < 60 {
+            return "\(app.timeLimitInMinutes) min"
+        } else if app.timeLimitInMinutes < 1440 {
+            let hours = app.timeLimitInMinutes / 60
+            return "\(hours)h"
+        } else {
+            return "24h"
+        }
+    }
+
+    var currentIndex: Int {
+        timeLimitOptions.firstIndex(of: app.timeLimitInMinutes) ?? 1
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -207,7 +225,7 @@ struct AppRowView: View {
                         .labelStyle(.titleOnly)
                         .font(.system(size: 16, weight: .semibold))
 
-                    Text("\(app.timeLimitInMinutes) min daily")
+                    Text("\(timeLimitDisplay) daily")
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                 }
@@ -238,31 +256,29 @@ struct AppRowView: View {
 
                         HStack(spacing: 8) {
                             Button(action: {
-                                print("Minus tapped, current: \(app.timeLimitInMinutes)")
-                                app.timeLimitInMinutes -= 15
-                                print("New value: \(app.timeLimitInMinutes)")
+                                let newIndex = max(0, currentIndex - 1)
+                                app.timeLimitInMinutes = timeLimitOptions[newIndex]
                             }) {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(app.timeLimitInMinutes > 15 ? .blue : .gray)
+                                    .foregroundColor(currentIndex > 0 ? .blue : .gray)
                             }
-                            .disabled(app.timeLimitInMinutes <= 15)
+                            .disabled(currentIndex <= 0)
                             .buttonStyle(.plain)
 
-                            Text("\(app.timeLimitInMinutes) min")
+                            Text(timeLimitDisplay)
                                 .font(.system(size: 16, weight: .semibold))
                                 .frame(minWidth: 70)
 
                             Button(action: {
-                                print("Plus tapped, current: \(app.timeLimitInMinutes)")
-                                app.timeLimitInMinutes += 15
-                                print("New value: \(app.timeLimitInMinutes)")
+                                let newIndex = min(timeLimitOptions.count - 1, currentIndex + 1)
+                                app.timeLimitInMinutes = timeLimitOptions[newIndex]
                             }) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(app.timeLimitInMinutes < 240 ? .blue : .gray)
+                                    .foregroundColor(currentIndex < timeLimitOptions.count - 1 ? .blue : .gray)
                             }
-                            .disabled(app.timeLimitInMinutes >= 240)
+                            .disabled(currentIndex >= timeLimitOptions.count - 1)
                             .buttonStyle(.plain)
                         }
                     }

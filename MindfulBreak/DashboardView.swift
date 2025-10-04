@@ -85,6 +85,7 @@ struct StatusView: View {
 struct AppCountdownCard: View {
     let app: MonitoredApp
     @State private var isShielded: Bool = false
+    @State private var showChallenge: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -140,9 +141,9 @@ struct AppCountdownCard: View {
             .cornerRadius(8)
 
             if isShielded {
-                // Unlock button
+                // Unlock button - shows challenge
                 Button(action: {
-                    print("Unlock requested for \(app.id)")
+                    showChallenge = true
                 }) {
                     HStack {
                         Image(systemName: "star.fill")
@@ -168,6 +169,12 @@ struct AppCountdownCard: View {
         .cornerRadius(16)
         .onAppear {
             checkShieldStatus()
+        }
+        .fullScreenCover(isPresented: $showChallenge) {
+            ChallengeView(app: app) {
+                showChallenge = false
+                isShielded = false // Update UI after unlock
+            }
         }
     }
 
@@ -377,7 +384,19 @@ struct ChallengeView: View {
     @State private var hasScrolledToBottom = false
     @State private var showSuccess = false
 
+    let app: MonitoredApp
     let onComplete: () -> Void
+
+    var unlockTimeDisplay: String {
+        if app.timeLimitInMinutes < 60 {
+            return "\(app.timeLimitInMinutes) minute\(app.timeLimitInMinutes > 1 ? "s" : "")"
+        } else if app.timeLimitInMinutes < 1440 {
+            let hours = app.timeLimitInMinutes / 60
+            return "\(hours) hour\(hours > 1 ? "s" : "")"
+        } else {
+            return "24 hours"
+        }
+    }
 
     var isScrolledToBottom: Bool {
         let bottomThreshold: CGFloat = 50
@@ -404,7 +423,7 @@ struct ChallengeView: View {
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Read the entire text below to unlock 1 minute of access")
+                    Text("Read the entire text below to unlock \(unlockTimeDisplay) of access")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
@@ -511,7 +530,7 @@ struct ChallengeView: View {
             }
 
             if showSuccess {
-                SuccessOverlay()
+                SuccessOverlay(unlockTime: unlockTimeDisplay)
             }
         }
     }
@@ -524,7 +543,7 @@ struct ChallengeView: View {
     }
 
     private func completeChallenge() {
-        print("✅ Challenge completed! Unlocking for 1 minute...")
+        print("✅ Challenge completed! Unlocking for \(unlockTimeDisplay)...")
 
         // Show success animation
         showSuccess = true
@@ -532,9 +551,10 @@ struct ChallengeView: View {
         // Unshield apps temporarily
         screenTimeManager.unshieldApps()
 
-        // Schedule re-shield after 1 minute (for testing)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-            print("⏱️ 1 minute expired - re-shielding apps")
+        // Schedule re-shield after the app's time limit (in seconds)
+        let unlockSeconds = TimeInterval(app.timeLimitInMinutes * 60)
+        DispatchQueue.main.asyncAfter(deadline: .now() + unlockSeconds) {
+            print("⏱️ \(self.unlockTimeDisplay) expired - re-shielding apps")
             screenTimeManager.shieldApps(dataStore.monitoredApps)
         }
 
@@ -583,6 +603,8 @@ struct ChallengeView: View {
 }
 
 struct SuccessOverlay: View {
+    let unlockTime: String
+
     var body: some View {
         ZStack {
             Color.black.opacity(0.4)
@@ -597,7 +619,7 @@ struct SuccessOverlay: View {
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.white)
 
-                Text("Unlocked for 1 minute")
+                Text("Unlocked for \(unlockTime)")
                     .font(.system(size: 18))
                     .foregroundColor(.white.opacity(0.9))
             }
@@ -625,6 +647,4 @@ struct ScrollViewHeightKey: PreferenceKey {
     }
 }
 
-#Preview {
-    ChallengeView(onComplete: {})
-}
+// Preview removed - requires FamilyControls ApplicationToken
