@@ -16,6 +16,7 @@ struct AppSelectionView: View {
     @State private var monitoredApps: [MonitoredApp] = []
     @State private var isRequestingAuth = false
     @State private var showAuthError = false
+    @State private var wasPickerPresented = false
 
     var onContinue: () -> Void
 
@@ -64,8 +65,10 @@ struct AppSelectionView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(monitoredApps.indices, id: \.self) { index in
-                                AppRowView(app: $monitoredApps[index])
+                            ForEach($monitoredApps) { $app in
+                                if app.isEnabled {
+                                    AppRowView(app: $app)
+                                }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -103,9 +106,9 @@ struct AppSelectionView: View {
                     }
                     .disabled(isRequestingAuth)
 
-                    if !monitoredApps.isEmpty {
+                    if !monitoredApps.filter({ $0.isEnabled }).isEmpty {
                         Button(action: {
-                            // Save monitored apps to persistent storage
+                            // Save all monitored apps (enabled and disabled) to persistent storage
                             dataStore.saveMonitoredApps(monitoredApps)
                             onContinue()
                         }) {
@@ -129,24 +132,30 @@ struct AppSelectionView: View {
         )
         .onChange(of: isPickerPresented) { isPresented in
             // Only update when picker is dismissed (goes from true to false)
-            if !isPresented {
+            if wasPickerPresented && !isPresented {
                 updateMonitoredApps(from: selectedAppsForPicker)
             }
+            wasPickerPresented = isPresented
         }
         .alert("Authorization Required", isPresented: $showAuthError) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Please grant Screen Time access to select apps")
         }
+        .onAppear {
+            // Load existing monitored apps from DataStore when view appears
+            if !dataStore.monitoredApps.isEmpty {
+                monitoredApps = dataStore.monitoredApps
+                print("✅ Loaded \(monitoredApps.count) existing apps")
+            }
+        }
     }
 
     private func requestAuthAndShowPicker() {
         // Check if already authorized
         if screenTimeManager.isAuthorized {
-            // Pre-populate the picker with currently selected apps
-            var selection = FamilyActivitySelection()
-            selection.applicationTokens = Set(monitoredApps.map { $0.token })
-            selectedAppsForPicker = selection
+            // Pre-populate the picker with only ENABLED apps
+            selectedAppsForPicker.applicationTokens = Set(monitoredApps.filter { $0.isEnabled }.map { $0.token })
             isPickerPresented = true
             return
         }
@@ -160,10 +169,8 @@ struct AppSelectionView: View {
                 await MainActor.run {
                     isRequestingAuth = false
                     if screenTimeManager.isAuthorized {
-                        // Pre-populate the picker with currently selected apps
-                        var selection = FamilyActivitySelection()
-                        selection.applicationTokens = Set(monitoredApps.map { $0.token })
-                        selectedAppsForPicker = selection
+                        // Pre-populate the picker with only ENABLED apps
+                        selectedAppsForPicker.applicationTokens = Set(monitoredApps.filter { $0.isEnabled }.map { $0.token })
                         isPickerPresented = true
                     } else {
                         showAuthError = true
@@ -184,7 +191,15 @@ struct AppSelectionView: View {
             guard let data = try? JSONEncoder().encode(token) else { return nil }
             return data.base64EncodedString()
         }
-        
+
+        // Build a set of selected token identifiers
+        var selectedIdentifiers = Set<String>()
+        for token in selection.applicationTokens {
+            if let identifier = tokenIdentifier(token) {
+                selectedIdentifiers.insert(identifier)
+            }
+        }
+
         // Build a map of existing apps by their token identifier
         var existingAppsById: [String: MonitoredApp] = [:]
         for app in monitoredApps {
@@ -192,26 +207,40 @@ struct AppSelectionView: View {
                 existingAppsById[identifier] = app
             }
         }
-        
-        // Build new array, preserving existing apps and their settings
+
+        // Build new array with all apps (enabled and disabled)
         var apps: [MonitoredApp] = []
-        
+
+        // Add all currently selected apps (either new or re-enabled)
         for token in selection.applicationTokens {
             guard let identifier = tokenIdentifier(token) else { continue }
-            
+
             if let existingApp = existingAppsById[identifier] {
-                // Keep existing app with its settings (time limit, enabled state, etc.)
-                apps.append(existingApp)
+                // Re-enable existing app and keep its settings
+                var updatedApp = existingApp
+                updatedApp.isEnabled = true
+                apps.append(updatedApp)
             } else {
                 // Create new app for newly selected token
-                // Use the token identifier as the ID for consistency
                 let app = MonitoredApp(
                     id: identifier,
                     token: token,
-                    timeLimitInMinutes: 1, // Default: 1 min for testing (change to 25 for production)
+                    timeLimitInMinutes: 1, // Default: 1 min for testing
                     isEnabled: true
                 )
                 apps.append(app)
+            }
+        }
+
+        // Mark previously selected apps that are no longer selected as disabled
+        for existingApp in monitoredApps {
+            guard let identifier = tokenIdentifier(existingApp.token) else { continue }
+
+            // If this app was previously selected but is now unselected, disable it
+            if !selectedIdentifiers.contains(identifier) && existingApp.isEnabled {
+                var disabledApp = existingApp
+                disabledApp.isEnabled = false
+                apps.append(disabledApp)
             }
         }
 

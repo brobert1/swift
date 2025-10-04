@@ -107,17 +107,41 @@ class ScreenTimeManager: ObservableObject {
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
 
         for app in enabledApps {
-            let eventName = DeviceActivityEvent.Name("limit_\(app.id)")
-
-            // This event fires when the app's CUMULATIVE DAILY USAGE reaches the limit
-            // iOS tracks the actual time spent in the app
-            let event = DeviceActivityEvent(
+            // Main limit event - fires when daily limit is reached
+            let limitEventName = DeviceActivityEvent.Name("limit_\(app.id)")
+            let limitEvent = DeviceActivityEvent(
                 applications: [app.token],
                 threshold: DateComponents(minute: app.timeLimitInMinutes)
             )
+            events[limitEventName] = limitEvent
 
-            events[eventName] = event
+            // Create early reminders to prompt user about their intention
+            // DeviceActivity may not support sub-minute thresholds reliably
+            // So we'll use both seconds and minutes to ensure it works
+            if app.timeLimitInMinutes > 0 {
+                // Try 30 seconds first (might work on newer iOS)
+                let earlyReminder30s = DeviceActivityEvent.Name("earlyReminder_\(app.id)_30s")
+                let event30s = DeviceActivityEvent(
+                    applications: [app.token],
+                    threshold: DateComponents(second: 30)
+                )
+                events[earlyReminder30s] = event30s
+                print("   📱 Registered 30-second reminder: \(earlyReminder30s.rawValue)")
+
+                // Also add 1-minute reminder as fallback
+                if app.timeLimitInMinutes > 1 {
+                    let earlyReminder1m = DeviceActivityEvent.Name("earlyReminder_\(app.id)_1m")
+                    let event1m = DeviceActivityEvent(
+                        applications: [app.token],
+                        threshold: DateComponents(minute: 1)
+                    )
+                    events[earlyReminder1m] = event1m
+                    print("   📱 Registered 1-minute reminder: \(earlyReminder1m.rawValue)")
+                }
+            }
+
             print("📊 Monitoring: \(app.timeLimitInMinutes) min daily limit")
+            print("   Total events registered: \(events.count)")
         }
 
         // Start monitoring

@@ -32,19 +32,25 @@ struct StatusView: View {
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
     @StateObject private var dataStore = DataStore.shared
 
+    // Only show enabled apps in the dashboard
+    private var enabledApps: [MonitoredApp] {
+        dataStore.monitoredApps.filter { $0.isEnabled }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
                     // Header
-                    VStack(spacing: 8) {
-                        Text("Monitored Apps")
-                            .font(.system(size: 28, weight: .bold))
+                VStack(spacing: 8) {
+                    Text("Monitored Apps")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
 
-                        Text("iOS tracks your usage automatically")
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
-                    }
+                    Text("iOS tracks your usage automatically")
+                        .font(.system(size: 16))
+                        .foregroundColor(.gray)
+                }
                     .padding(.top, 20)
 
                     // Monitoring Status Card
@@ -54,7 +60,7 @@ struct StatusView: View {
                     )
                     .padding(.horizontal, 16)
 
-                    if dataStore.monitoredApps.isEmpty {
+                    if enabledApps.isEmpty {
                         VStack(spacing: 16) {
                             Image(systemName: "shield.slash")
                                 .font(.system(size: 60))
@@ -62,23 +68,23 @@ struct StatusView: View {
 
                             Text("No apps being protected")
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.white)
 
                             Text("Add apps in Settings to start")
                                 .font(.system(size: 14))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.gray)
                         }
                         .padding(.top, 100)
                     } else {
-                        // App cards with countdown timers
-                        ForEach(dataStore.monitoredApps) { app in
+                        // App cards with countdown timers - only show enabled apps
+                        ForEach(enabledApps) { app in
                             AppCountdownCard(app: app)
                                 .padding(.horizontal, 16)
                         }
                     }
                 }
             }
-            .background(Color(uiColor: .systemGroupedBackground))
+            .background(Color.black)
         }
     }
 }
@@ -150,23 +156,27 @@ struct AppCountdownCard: View {
                 }) {
                     Text("Complete a challenge")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                         .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-                        )
                 }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color(white: 0.15))
         .cornerRadius(16)
         .onAppear {
+            checkShieldStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Refresh shield status when app comes to foreground
+            checkShieldStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Also refresh when app becomes active
             checkShieldStatus()
         }
         .fullScreenCover(isPresented: $showChallenge) {
@@ -179,7 +189,11 @@ struct AppCountdownCard: View {
 
     private func checkShieldStatus() {
         if let defaults = UserDefaults(suiteName: "group.com.developer.mindfullness.shared") {
-            isShielded = defaults.bool(forKey: "appShielded_\(app.id)")
+            let newShieldState = defaults.bool(forKey: "appShielded_\(app.id)")
+            if newShieldState != isShielded {
+                print("🔄 Shield status changed for \(app.id): \(newShieldState)")
+            }
+            isShielded = newShieldState
         }
     }
 }
@@ -187,6 +201,8 @@ struct AppCountdownCard: View {
 struct SettingsView: View {
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
     @StateObject private var dataStore = DataStore.shared
+    @State private var showEditApps = false
+    @State private var showEditInterests = false
 
     var body: some View {
         NavigationStack {
@@ -251,13 +267,35 @@ struct SettingsView: View {
                 }
 
                 Section("Monitored Apps") {
-                    Text("Edit your monitored apps")
-                        .foregroundColor(.blue)
+                    Button(action: {
+                        showEditApps = true
+                    }) {
+                        HStack {
+                            Image(systemName: "app.badge")
+                                .foregroundColor(.purple)
+                            Text("Edit your monitored apps")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                    }
                 }
 
                 Section("Interests") {
-                    Text("Update your interests")
-                        .foregroundColor(.blue)
+                    Button(action: {
+                        showEditInterests = true
+                    }) {
+                        HStack {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.purple)
+                            Text("Update your interests")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                    }
                 }
 
                 Section("About") {
@@ -270,6 +308,12 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showEditApps) {
+                EditAppsSheet()
+            }
+            .sheet(isPresented: $showEditInterests) {
+                EditInterestsSheet()
+            }
         }
     }
 }
@@ -297,11 +341,12 @@ struct MonitoringStatusCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(statusTitle)
                     .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
                     .lineLimit(1)
 
                 Text(statusMessage)
                     .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.gray)
                     .lineLimit(2)
             }
 
@@ -314,7 +359,7 @@ struct MonitoringStatusCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color(white: 0.15))
         .cornerRadius(16)
     }
 
@@ -648,4 +693,190 @@ struct ScrollViewHeightKey: PreferenceKey {
     }
 }
 
+// MARK: - Edit Sheets
+
+struct EditAppsSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var dataStore = DataStore.shared
+    @StateObject private var screenTimeManager = ScreenTimeManager.shared
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black
+                    .ignoresSafeArea()
+                
+                AppSelectionView {
+                    // Restart monitoring with updated apps
+                    if dataStore.isMonitoringActive {
+                        screenTimeManager.stopMonitoring()
+                        screenTimeManager.startMonitoring(for: dataStore.monitoredApps)
+                    }
+                    dismiss()
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+        }
+    }
+}
+
+struct EditInterestsSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var dataStore = DataStore.shared
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black
+                    .ignoresSafeArea()
+                
+                InterestSelectionView {
+                    dismiss()
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+        }
+    }
+}
+
 // Preview removed - requires FamilyControls ApplicationToken
+//
+//  IntentPromptView.swift
+//  MindfulBreak
+//
+//  Screen that asks users why they're opening the app
+//
+
+import SwiftUI
+
+struct IntentPromptView: View {
+    let appId: String
+    let onDismiss: () -> Void
+
+    @State private var userIntent: String = ""
+    @FocusState private var isTextFieldFocused: Bool
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.95)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Spacer()
+
+                // Icon
+                Image(systemName: "questionmark.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(Color(red: 0.55, green: 0.5, blue: 0.7))
+
+                // Title
+                Text("Why are you opening this app?")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+
+                // Subtitle
+                Text("Take a moment to reflect on your intention")
+                    .font(.system(size: 16))
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+
+                // Text field
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("", text: $userIntent, prompt: Text("I'm opening this app because...").foregroundColor(.gray))
+                        .focused($isTextFieldFocused)
+                        .padding()
+                        .font(.system(size: 16))
+                        .foregroundColor(.white)
+                        .background(Color(white: 0.15))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.3), lineWidth: 1)
+                        )
+
+                    if userIntent.count > 0 {
+                        Text("\(userIntent.count) characters")
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 16)
+
+                Spacer()
+
+                // Continue button
+                Button(action: {
+                    saveIntent()
+                    onDismiss()
+                }) {
+                    Text(userIntent.isEmpty ? "Skip" : "Continue")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(userIntent.isEmpty ? .white : .black)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(userIntent.isEmpty ? Color(white: 0.25) : Color(red: 0.55, green: 0.5, blue: 0.7))
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 40)
+            }
+        }
+        .onAppear {
+            // Auto-focus the text field
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isTextFieldFocused = true
+            }
+        }
+    }
+
+    private func saveIntent() {
+        guard !userIntent.isEmpty else { return }
+
+        // Save the user's intent to App Group storage
+        if let defaults = UserDefaults(suiteName: "group.com.developer.mindfullness.shared") {
+            // Get existing intents for this app
+            var intents = defaults.array(forKey: "intents_\(appId)") as? [[String: Any]] ?? []
+
+            // Add new intent with timestamp
+            let intentData: [String: Any] = [
+                "text": userIntent,
+                "timestamp": Date().timeIntervalSince1970
+            ]
+            intents.append(intentData)
+
+            // Keep only last 20 intents
+            if intents.count > 20 {
+                intents = Array(intents.suffix(20))
+            }
+
+            defaults.set(intents, forKey: "intents_\(appId)")
+            defaults.synchronize()
+
+            print("✅ Saved user intent: \(userIntent)")
+        }
+    }
+}
+
+#Preview {
+    IntentPromptView(appId: "test", onDismiss: {})
+}

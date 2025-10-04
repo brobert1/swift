@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct InterestSelectionView: View {
+    @StateObject private var dataStore = DataStore.shared
     @State private var selectedInterests: Set<String> = []
 
     var onContinue: () -> Void
@@ -75,7 +76,11 @@ struct InterestSelectionView: View {
                             .foregroundColor(.gray)
                     }
 
-                    Button(action: onContinue) {
+                    Button(action: {
+                        // Save interests to DataStore
+                        dataStore.saveInterests(Array(selectedInterests))
+                        onContinue()
+                    }) {
                         Text("Continue")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.black)
@@ -88,6 +93,12 @@ struct InterestSelectionView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
+            }
+        }
+        .onAppear {
+            // Load existing interests when editing
+            if !dataStore.userInterests.isEmpty {
+                selectedInterests = Set(dataStore.userInterests)
             }
         }
     }
