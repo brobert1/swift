@@ -7,13 +7,16 @@
 
 import SwiftUI
 import UserNotifications
+import FamilyControls
 
 @main
 struct MindfulBreakApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @State private var showIntentPrompt = false
+    @State private var showChallenge = false
     @State private var promptAppId: String?
+    @State private var challengeAppId: String?
     @State private var userIntent: String = ""
 
     var body: some Scene {
@@ -38,12 +41,29 @@ struct MindfulBreakApp: App {
             }
             .onAppear {
                 appDelegate.showIntentPromptHandler = { appId in
-                    print("🎯 [APP] Handler called with appId: \(appId)")
+                    print("🎯 [APP] Intent prompt handler called with appId: \(appId)")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         self.promptAppId = appId
                         withAnimation {
                             self.showIntentPrompt = true
                         }
+                    }
+                }
+                
+                appDelegate.showChallengeHandler = { appId in
+                    print("🎯 [APP] Challenge handler called with appId: \(appId)")
+                    DispatchQueue.main.async {
+                        self.challengeAppId = appId
+                        self.showChallenge = true
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showChallenge) {
+                if let appId = challengeAppId,
+                   let app = DataStore.shared.monitoredApps.first(where: { $0.id == appId }) {
+                    ChallengeView(app: app) {
+                        showChallenge = false
+                        challengeAppId = nil
                     }
                 }
             }
@@ -54,6 +74,7 @@ struct MindfulBreakApp: App {
 // AppDelegate to handle notifications
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     var showIntentPromptHandler: ((String) -> Void)?
+    var showChallengeHandler: ((String) -> Void)?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
@@ -68,25 +89,55 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         let userInfo = response.notification.request.content.userInfo
         print("   UserInfo: \(userInfo)")
 
-        if let type = userInfo["type"] as? String,
-           let appId = userInfo["appId"] as? String {
+        if let type = userInfo["type"] as? String {
+            print("   Type: \(type)")
 
-            print("   Type: \(type), AppId: \(appId)")
-
-            if type == "reminder" {
+            if type == "reminder", let appId = userInfo["appId"] as? String {
                 // Show intent prompt when user taps reminder notification
                 print("⏰ [APPDELEGATE] Calling showIntentPromptHandler for app: \(appId)")
-                print("   Handler exists: \(showIntentPromptHandler != nil)")
                 DispatchQueue.main.async {
                     self.showIntentPromptHandler?(appId)
-                    print("   Handler called!")
+                }
+            } else if type == "limit" || type == "shield_tapped" {
+                // Show challenge when user taps time's up notification
+                print("🎯 [APPDELEGATE] Calling showChallengeHandler")
+                
+                // Try to get appId from userInfo, or find first shielded app
+                var targetAppId: String?
+                if let appId = userInfo["appId"] as? String {
+                    targetAppId = appId
+                } else {
+                    // Find first shielded app
+                    if let defaults = UserDefaults(suiteName: "group.com.developer.mindfullness.shared"),
+                       let monitoredAppsData = defaults.data(forKey: "monitoredApps"),
+                       let apps = try? JSONDecoder().decode([MonitoredAppCodable].self, from: monitoredAppsData) {
+                        targetAppId = apps.first(where: { 
+                            defaults.bool(forKey: "appShielded_\($0.id)")
+                        })?.id
+                    }
+                }
+                
+                if let appId = targetAppId {
+                    print("   AppId: \(appId)")
+                    DispatchQueue.main.async {
+                        self.showChallengeHandler?(appId)
+                    }
+                } else {
+                    print("   ❌ No shielded app found")
                 }
             }
         } else {
-            print("   ❌ Could not extract type or appId from userInfo")
+            print("   ❌ Could not extract type from userInfo")
         }
 
         completionHandler()
+    }
+    
+    // Helper struct to decode monitored apps
+    private struct MonitoredAppCodable: Codable {
+        let id: String
+        let token: ApplicationToken
+        let timeLimitInMinutes: Int
     }
 
     // Show notification even when app is in foreground

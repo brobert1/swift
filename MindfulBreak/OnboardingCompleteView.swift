@@ -44,7 +44,7 @@ struct OnboardingCompleteView: View {
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Mindful Break is now active and ready to help you build healthier digital habits")
+                    Text("Neura is now active and ready to help you build healthier digital habits")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)

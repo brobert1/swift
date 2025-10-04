@@ -109,11 +109,15 @@ class ScreenTimeManager: ObservableObject {
         for app in enabledApps {
             // Main limit event - fires when daily limit is reached
             let limitEventName = DeviceActivityEvent.Name("limit_\(app.id)")
+
+            // TESTING: Use 30 seconds for faster testing
             let limitEvent = DeviceActivityEvent(
                 applications: [app.token],
-                threshold: DateComponents(minute: app.timeLimitInMinutes)
+                threshold: DateComponents(second: 30)
             )
             events[limitEventName] = limitEvent
+
+            print("🧪 TESTING MODE: Using 30-second limit instead of \(app.timeLimitInMinutes) minutes")
 
             // Create early reminders to prompt user about their intention
             // DeviceActivity may not support sub-minute thresholds reliably

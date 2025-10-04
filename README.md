@@ -1,4 +1,4 @@
-# Mindful Break
+# Neura
 
 A digital wellness iOS app that helps users manage screen time through personalized micro-challenges.
 

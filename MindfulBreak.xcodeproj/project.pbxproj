@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		55CAB4C52E9139CC00E9DFF8 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55CAB4C42E9139CB00E9DFF8 /* DeviceActivity.framework */; };
 		55CAB4CD2E9139CC00E9DFF8 /* MindfulBreakMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55CAB4C22E9139CB00E9DFF8 /* MindfulBreakMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55CAB4E32E91852500E9DFF8 /* Assets.xcassets */; };
 		AA0001 /* MindfulBreakApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001 /* MindfulBreakApp.swift */; };
 		AA0002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002 /* Models.swift */; };
 		AA0003 /* ScreenTimeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003 /* ScreenTimeManager.swift */; };
@@ -51,6 +52,7 @@
 		19B0A0992E91272700ACA4D7 /* MindfulBreakRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MindfulBreakRelease.entitlements; sourceTree = "<group>"; };
 		55CAB4C22E9139CB00E9DFF8 /* MindfulBreakMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MindfulBreakMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		55CAB4C42E9139CB00E9DFF8 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		55CAB4E32E91852500E9DFF8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB0001 /* MindfulBreakApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MindfulBreakApp.swift; sourceTree = "<group>"; };
 		BB0002 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		BB0003 /* ScreenTimeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenTimeManager.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 				BB0008 /* OnboardingCompleteView.swift */,
 				BB0009 /* OnboardingCoordinator.swift */,
 				BB0010 /* DashboardView.swift */,
+				55CAB4E32E91852500E9DFF8 /* Assets.xcassets */,
 			);
 			path = MindfulBreak;
 			sourceTree = "<group>";
@@ -198,7 +201,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					55CAB4C12E9139CB00E9DFF8 = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -239,6 +242,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,7 +293,6 @@
 				CODE_SIGN_ENTITLEMENTS = MindfulBreakMonitor/MindfulBreakMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MindfulBreakMonitor/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindfulBreakMonitor;
@@ -320,7 +323,6 @@
 				CODE_SIGN_ENTITLEMENTS = MindfulBreakMonitor/MindfulBreakMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MindfulBreakMonitor/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MindfulBreakMonitor;
@@ -379,6 +381,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -402,6 +405,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -442,6 +446,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -458,6 +463,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -468,10 +474,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = MindfulBreak/MindfulBreak.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSUserNotificationUsageDescription = "We need notifications to alert you when you reach your time limits";
@@ -501,10 +507,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = MindfulBreak/MindfulBreakRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = VQMLSSZZUF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSUserNotificationUsageDescription = "We need notifications to alert you when you reach your time limits";

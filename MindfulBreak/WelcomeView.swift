@@ -43,7 +43,7 @@ struct WelcomeView: View {
                     }
                     .padding(.top, 60)
 
-                    Text("Mindful Break")
+                    Text("Neura")
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
 

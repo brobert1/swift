@@ -231,8 +231,11 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
         // Trigger immediately
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Use timestamp to make identifier unique so notification appears every time
+        let uniqueIdentifier = "limit_reached_\(appId)_\(Date().timeIntervalSince1970)"
         let request = UNNotificationRequest(
-            identifier: "limit_reached_\(appId)",
+            identifier: uniqueIdentifier,
             content: content,
             trigger: trigger
         )

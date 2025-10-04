@@ -302,7 +302,7 @@ struct MonitoringPermissionCard: View {
             }
 
             if !isEnabled {
-                Text("Mindful Break will monitor your app usage and automatically shield apps when you reach your daily limits. You can always adjust settings later.")
+                Text("Neura will monitor your app usage and automatically shield apps when you reach your daily limits. You can always adjust settings later.")
                     .font(.system(size: 14))
                     .foregroundColor(.gray)
                     .padding(.bottom, 8)
