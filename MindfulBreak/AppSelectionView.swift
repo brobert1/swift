@@ -10,9 +10,12 @@ import FamilyControls
 
 struct AppSelectionView: View {
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
+    @StateObject private var dataStore = DataStore.shared
     @State private var isPickerPresented = false
     @State private var selectedAppsForPicker = FamilyActivitySelection()
     @State private var monitoredApps: [MonitoredApp] = []
+    @State private var isRequestingAuth = false
+    @State private var showAuthError = false
 
     var onContinue: () -> Void
 
@@ -61,8 +64,8 @@ struct AppSelectionView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach($monitoredApps) { $app in
-                                AppRowView(app: $app)
+                            ForEach(monitoredApps.indices, id: \.self) { index in
+                                AppRowView(app: $monitoredApps[index])
                             }
                         }
                         .padding(.horizontal, 16)
@@ -75,13 +78,21 @@ struct AppSelectionView: View {
                 // Bottom buttons
                 VStack(spacing: 12) {
                     Button(action: {
-                        isPickerPresented = true
+                        requestAuthAndShowPicker()
                     }) {
                         HStack {
-                            Image(systemName: monitoredApps.isEmpty ? "plus.circle.fill" : "pencil.circle.fill")
-                                .font(.system(size: 20))
-                            Text(monitoredApps.isEmpty ? "Select Apps" : "Edit Selection")
-                                .font(.system(size: 16, weight: .semibold))
+                            if isRequestingAuth {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                                Text("Requesting Access...")
+                                    .font(.system(size: 16, weight: .semibold))
+                            } else {
+                                Image(systemName: monitoredApps.isEmpty ? "plus.circle.fill" : "pencil.circle.fill")
+                                    .font(.system(size: 20))
+                                Text(monitoredApps.isEmpty ? "Select Apps" : "Edit Selection")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -89,9 +100,14 @@ struct AppSelectionView: View {
                         .background(Color.blue)
                         .cornerRadius(12)
                     }
+                    .disabled(isRequestingAuth)
 
                     if !monitoredApps.isEmpty {
-                        Button(action: onContinue) {
+                        Button(action: {
+                            // Save monitored apps to persistent storage
+                            dataStore.saveMonitoredApps(monitoredApps)
+                            onContinue()
+                        }) {
                             Text("Continue")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
@@ -114,6 +130,41 @@ struct AppSelectionView: View {
             // Only update when picker is dismissed (goes from true to false)
             if !isPresented {
                 updateMonitoredApps(from: selectedAppsForPicker)
+            }
+        }
+        .alert("Authorization Required", isPresented: $showAuthError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Please grant Screen Time access to select apps")
+        }
+    }
+
+    private func requestAuthAndShowPicker() {
+        // Check if already authorized
+        if screenTimeManager.isAuthorized {
+            isPickerPresented = true
+            return
+        }
+
+        // Request authorization first
+        isRequestingAuth = true
+        Task {
+            do {
+                try await screenTimeManager.requestAuthorization()
+                // Authorization successful, show picker
+                await MainActor.run {
+                    isRequestingAuth = false
+                    if screenTimeManager.isAuthorized {
+                        isPickerPresented = true
+                    } else {
+                        showAuthError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isRequestingAuth = false
+                    showAuthError = true
+                }
             }
         }
     }
@@ -164,6 +215,9 @@ struct AppRowView: View {
 
                 Toggle("", isOn: $app.isEnabled)
                     .labelsHidden()
+                    .onChange(of: app.isEnabled) { newValue in
+                        print("Toggle changed to: \(newValue)")
+                    }
             }
             .padding(16)
             .background(Color(uiColor: .secondarySystemGroupedBackground))
@@ -183,30 +237,32 @@ struct AppRowView: View {
 
                         HStack(spacing: 8) {
                             Button(action: {
-                                if app.timeLimitInMinutes > 15 {
-                                    app.timeLimitInMinutes -= 15
-                                }
+                                print("Minus tapped, current: \(app.timeLimitInMinutes)")
+                                app.timeLimitInMinutes -= 15
+                                print("New value: \(app.timeLimitInMinutes)")
                             }) {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 24))
                                     .foregroundColor(app.timeLimitInMinutes > 15 ? .blue : .gray)
                             }
                             .disabled(app.timeLimitInMinutes <= 15)
+                            .buttonStyle(.plain)
 
                             Text("\(app.timeLimitInMinutes) min")
                                 .font(.system(size: 16, weight: .semibold))
                                 .frame(minWidth: 70)
 
                             Button(action: {
-                                if app.timeLimitInMinutes < 240 {
-                                    app.timeLimitInMinutes += 15
-                                }
+                                print("Plus tapped, current: \(app.timeLimitInMinutes)")
+                                app.timeLimitInMinutes += 15
+                                print("New value: \(app.timeLimitInMinutes)")
                             }) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 24))
                                     .foregroundColor(app.timeLimitInMinutes < 240 ? .blue : .gray)
                             }
                             .disabled(app.timeLimitInMinutes >= 240)
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 16)

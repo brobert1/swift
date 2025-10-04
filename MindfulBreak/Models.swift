@@ -13,19 +13,11 @@ struct UserPreferences: Codable {
     var interests: [String] = []
 }
 
-struct MonitoredApp: Identifiable, Hashable {
+struct MonitoredApp: Identifiable {
     let id: String // Unique identifier based on token
     let token: ApplicationToken
     var timeLimitInMinutes: Int = 60
     var isEnabled: Bool = true
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-
-    static func == (lhs: MonitoredApp, rhs: MonitoredApp) -> Bool {
-        lhs.id == rhs.id
-    }
 }
 
 enum TaskType: String, Codable {

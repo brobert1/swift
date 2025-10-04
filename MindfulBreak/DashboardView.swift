@@ -29,8 +29,8 @@ struct DashboardView: View {
 }
 
 struct StatusView: View {
-    // Mock data - empty for now since we need real tokens
-    let monitoredApps: [MonitoredApp] = []
+    @StateObject private var screenTimeManager = ScreenTimeManager.shared
+    @StateObject private var dataStore = DataStore.shared
 
     var body: some View {
         NavigationStack {
@@ -47,7 +47,24 @@ struct StatusView: View {
                     }
                     .padding(.top, 20)
 
-                    if monitoredApps.isEmpty {
+                    // Monitoring Control Card
+                    MonitoringControlCard(
+                        isMonitoring: dataStore.isMonitoringActive,
+                        isShielded: screenTimeManager.areAppsShielded,
+                        onStartMonitoring: {
+                            screenTimeManager.startMonitoring(for: dataStore.monitoredApps)
+                            dataStore.setMonitoringActive(true)
+                        },
+                        onStopMonitoring: {
+                            screenTimeManager.stopMonitoring()
+                            dataStore.setMonitoringActive(false)
+                        },
+                        onToggleShield: {
+                            screenTimeManager.toggleShield(for: dataStore.monitoredApps)
+                        }
+                    )
+
+                    if dataStore.monitoredApps.isEmpty {
                         VStack(spacing: 16) {
                             Image(systemName: "chart.bar.xaxis")
                                 .font(.system(size: 60))
@@ -64,7 +81,7 @@ struct StatusView: View {
                         .padding(.top, 100)
                     } else {
                         // App cards
-                        ForEach(monitoredApps) { app in
+                        ForEach(dataStore.monitoredApps) { app in
                             AppUsageCard(app: app)
                         }
                     }
@@ -160,6 +177,91 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+        }
+    }
+}
+
+// MARK: - Monitoring Control Card
+
+struct MonitoringControlCard: View {
+    let isMonitoring: Bool
+    let isShielded: Bool
+    let onStartMonitoring: () -> Void
+    let onStopMonitoring: () -> Void
+    let onToggleShield: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Protection Status")
+                        .font(.system(size: 18, weight: .semibold))
+
+                    Text(statusText)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Circle()
+                    .fill(isMonitoring ? Color.green : Color.gray)
+                    .frame(width: 12, height: 12)
+            }
+
+            Divider()
+
+            // Monitoring Toggle
+            HStack {
+                Text("Active Monitoring")
+                    .font(.system(size: 16))
+
+                Spacer()
+
+                Button(action: isMonitoring ? onStopMonitoring : onStartMonitoring) {
+                    Text(isMonitoring ? "Stop" : "Start")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(isMonitoring ? Color.red : Color.green)
+                        .cornerRadius(8)
+                }
+            }
+
+            // Manual Shield Toggle (for testing)
+            HStack {
+                Text("Shield Apps Now")
+                    .font(.system(size: 16))
+
+                Spacer()
+
+                Button(action: onToggleShield) {
+                    Text(isShielded ? "Unshield" : "Shield")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(isShielded ? Color.orange : Color.blue)
+                        .cornerRadius(8)
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(16)
+        .padding(.horizontal, 16)
+    }
+
+    private var statusText: String {
+        if isMonitoring && isShielded {
+            return "Monitoring active, apps shielded"
+        } else if isMonitoring {
+            return "Monitoring active"
+        } else if isShielded {
+            return "Apps shielded, monitoring inactive"
+        } else {
+            return "Protection inactive"
         }
     }
 }
