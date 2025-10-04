@@ -107,6 +107,7 @@ struct AppCountdownCard: View {
                             .font(.system(size: 12))
                         Text(isShielded ? "Limit Reached" : "Monitoring Active")
                             .font(.system(size: 14))
+                            .lineLimit(1)
                     }
                     .foregroundColor(isShielded ? .red : .green)
                 }
@@ -296,10 +297,12 @@ struct MonitoringStatusCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(statusTitle)
                     .font(.system(size: 18, weight: .semibold))
+                    .lineLimit(1)
 
                 Text(statusMessage)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
+                    .lineLimit(2)
             }
 
             Spacer()

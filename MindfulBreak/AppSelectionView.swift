@@ -21,7 +21,7 @@ struct AppSelectionView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground)
+            Color.black
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -29,11 +29,11 @@ struct AppSelectionView: View {
                 VStack(spacing: 8) {
                     Text("Choose Your Apps")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
 
                     Text("Select the apps you want to manage and set daily limits")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
@@ -51,11 +51,11 @@ struct AppSelectionView: View {
 
                         Text("No apps selected")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
 
                         Text("Tap the button below to choose apps to monitor")
                             .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
 
@@ -87,6 +87,7 @@ struct AppSelectionView: View {
                                     .tint(.white)
                                 Text("Requesting Access...")
                                     .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
                             } else {
                                 Image(systemName: monitoredApps.isEmpty ? "plus.circle.fill" : "pencil.circle.fill")
                                     .font(.system(size: 20))
@@ -94,10 +95,10 @@ struct AppSelectionView: View {
                                     .font(.system(size: 16, weight: .semibold))
                             }
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(monitoredApps.isEmpty ? .black : .white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(monitoredApps.isEmpty ? Color(red: 0.55, green: 0.5, blue: 0.7) : Color(white: 0.25))
                         .cornerRadius(12)
                     }
                     .disabled(isRequestingAuth)
@@ -110,10 +111,10 @@ struct AppSelectionView: View {
                         }) {
                             Text("Continue")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.black)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.green)
+                                .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                                 .cornerRadius(12)
                         }
                     }
@@ -142,6 +143,10 @@ struct AppSelectionView: View {
     private func requestAuthAndShowPicker() {
         // Check if already authorized
         if screenTimeManager.isAuthorized {
+            // Pre-populate the picker with currently selected apps
+            var selection = FamilyActivitySelection()
+            selection.applicationTokens = Set(monitoredApps.map { $0.token })
+            selectedAppsForPicker = selection
             isPickerPresented = true
             return
         }
@@ -155,6 +160,10 @@ struct AppSelectionView: View {
                 await MainActor.run {
                     isRequestingAuth = false
                     if screenTimeManager.isAuthorized {
+                        // Pre-populate the picker with currently selected apps
+                        var selection = FamilyActivitySelection()
+                        selection.applicationTokens = Set(monitoredApps.map { $0.token })
+                        selectedAppsForPicker = selection
                         isPickerPresented = true
                     } else {
                         showAuthError = true
@@ -170,19 +179,40 @@ struct AppSelectionView: View {
     }
 
     private func updateMonitoredApps(from selection: FamilyActivitySelection) {
-        // Convert FamilyActivitySelection to MonitoredApp array
+        // Create a stable identifier for each token by encoding it
+        func tokenIdentifier(_ token: some Encodable) -> String? {
+            guard let data = try? JSONEncoder().encode(token) else { return nil }
+            return data.base64EncodedString()
+        }
+        
+        // Build a map of existing apps by their token identifier
+        var existingAppsById: [String: MonitoredApp] = [:]
+        for app in monitoredApps {
+            if let identifier = tokenIdentifier(app.token) {
+                existingAppsById[identifier] = app
+            }
+        }
+        
+        // Build new array, preserving existing apps and their settings
         var apps: [MonitoredApp] = []
-
+        
         for token in selection.applicationTokens {
-            // Use UUID for unique ID since hashValue can collide
-            let appId = UUID().uuidString
-            let app = MonitoredApp(
-                id: appId,
-                token: token,
-                timeLimitInMinutes: 1, // Default: 1 min for testing (change to 25 for production)
-                isEnabled: true
-            )
-            apps.append(app)
+            guard let identifier = tokenIdentifier(token) else { continue }
+            
+            if let existingApp = existingAppsById[identifier] {
+                // Keep existing app with its settings (time limit, enabled state, etc.)
+                apps.append(existingApp)
+            } else {
+                // Create new app for newly selected token
+                // Use the token identifier as the ID for consistency
+                let app = MonitoredApp(
+                    id: identifier,
+                    token: token,
+                    timeLimitInMinutes: 1, // Default: 1 min for testing (change to 25 for production)
+                    isEnabled: true
+                )
+                apps.append(app)
+            }
         }
 
         monitoredApps = apps
@@ -227,7 +257,7 @@ struct AppRowView: View {
 
                     Text("\(timeLimitDisplay) daily")
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
 
                 Spacer()
@@ -239,18 +269,16 @@ struct AppRowView: View {
                     }
             }
             .padding(16)
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(12)
 
             if app.isEnabled {
-                VStack(spacing: 12) {
+                VStack(spacing: 0) {
                     Divider()
-                        .padding(.horizontal, 16)
+                        .background(Color.gray.opacity(0.3))
 
                     HStack {
                         Text("Daily Limit")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
 
                         Spacer()
 
@@ -261,13 +289,14 @@ struct AppRowView: View {
                             }) {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(currentIndex > 0 ? .blue : .gray)
+                                    .foregroundColor(currentIndex > 0 ? Color(red: 0.55, green: 0.5, blue: 0.7) : .gray)
                             }
                             .disabled(currentIndex <= 0)
                             .buttonStyle(.plain)
 
                             Text(timeLimitDisplay)
                                 .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
                                 .frame(minWidth: 70)
 
                             Button(action: {
@@ -276,18 +305,17 @@ struct AppRowView: View {
                             }) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundColor(currentIndex < timeLimitOptions.count - 1 ? .blue : .gray)
+                                    .foregroundColor(currentIndex < timeLimitOptions.count - 1 ? Color(red: 0.55, green: 0.5, blue: 0.7) : .gray)
                             }
                             .disabled(currentIndex >= timeLimitOptions.count - 1)
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    .padding(16)
                 }
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
             }
         }
+        .background(Color(white: 0.15))
         .cornerRadius(12)
     }
 }

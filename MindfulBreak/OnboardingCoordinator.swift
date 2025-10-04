@@ -6,13 +6,12 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 enum OnboardingStep: Int, CaseIterable {
     case welcome = 0
     case appSelection
     case interestSelection
-    case permissions
-    case complete
 }
 
 class OnboardingCoordinator: ObservableObject {
@@ -63,21 +62,14 @@ struct OnboardingContainerView: View {
 
             case .interestSelection:
                 InterestSelectionView {
-                    coordinator.nextStep()
-                }
-                .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
-
-            case .permissions:
-                PermissionsView {
-                    coordinator.nextStep()
-                }
-                .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
-
-            case .complete:
-                OnboardingCompleteView {
-                    withAnimation {
-                        coordinator.completeOnboarding()
-                    }
+                    // Request notification permissions
+                    requestNotificationPermissions()
+                    
+                    // Enable monitoring
+                    enableMonitoring()
+                    
+                    // Complete onboarding
+                    coordinator.completeOnboarding()
                 }
                 .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
             }
@@ -86,6 +78,34 @@ struct OnboardingContainerView: View {
         .fullScreenCover(isPresented: $coordinator.isOnboardingComplete) {
             DashboardView()
         }
+    }
+    
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    print("✅ Notification permissions granted")
+                } else {
+                    print("⚠️ Notification permissions denied")
+                }
+            }
+        }
+    }
+    
+    private func enableMonitoring() {
+        let screenTimeManager = ScreenTimeManager.shared
+        let dataStore = DataStore.shared
+        
+        guard screenTimeManager.isAuthorized else {
+            print("⚠️ Screen Time not authorized")
+            return
+        }
+        
+        // Start DeviceActivity monitoring with thresholds
+        screenTimeManager.startMonitoring(for: dataStore.monitoredApps)
+        dataStore.setMonitoringActive(true)
+        
+        print("✅ Started monitoring \(dataStore.monitoredApps.count) apps")
     }
 }
 

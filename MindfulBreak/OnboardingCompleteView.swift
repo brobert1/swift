@@ -12,12 +12,8 @@ struct OnboardingCompleteView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.green.opacity(0.6), Color.blue.opacity(0.6)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Color.black
+                .ignoresSafeArea()
 
             VStack(spacing: 40) {
                 Spacer()
@@ -25,21 +21,21 @@ struct OnboardingCompleteView: View {
                 // Success Animation
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.2))
                         .frame(width: 140, height: 140)
 
                     Circle()
-                        .fill(Color.white.opacity(0.3))
+                        .fill(Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.3))
                         .frame(width: 120, height: 120)
 
                     ZStack {
                         Circle()
-                            .fill(Color.white)
+                            .fill(Color(red: 0.55, green: 0.5, blue: 0.7))
                             .frame(width: 100, height: 100)
 
                         Image(systemName: "checkmark")
                             .font(.system(size: 50, weight: .bold))
-                            .foregroundColor(.green)
+                            .foregroundColor(.white)
                     }
                 }
 
@@ -69,10 +65,10 @@ struct OnboardingCompleteView: View {
                 Button(action: onFinish) {
                     Text("Finish")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.green)
+                        .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.white)
+                        .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                         .cornerRadius(16)
                 }
                 .padding(.horizontal, 40)

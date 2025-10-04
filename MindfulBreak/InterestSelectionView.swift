@@ -25,7 +25,7 @@ struct InterestSelectionView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground)
+            Color.black
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -33,13 +33,13 @@ struct InterestSelectionView: View {
                 VStack(spacing: 8) {
                     Text("Personalize Your Challenges")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
                     Text("What are you into? We'll tailor your tasks to your interests")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
@@ -72,16 +72,16 @@ struct InterestSelectionView: View {
                     if !selectedInterests.isEmpty {
                         Text("\(selectedInterests.count) interest\(selectedInterests.count == 1 ? "" : "s") selected")
                             .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
                     }
 
                     Button(action: onContinue) {
                         Text("Continue")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(selectedInterests.isEmpty ? Color.gray : Color.blue)
+                            .background(selectedInterests.isEmpty ? Color.gray.opacity(0.3) : Color(red: 0.55, green: 0.5, blue: 0.7))
                             .cornerRadius(12)
                     }
                     .disabled(selectedInterests.isEmpty)
@@ -99,13 +99,6 @@ struct InterestSelectionView: View {
             selectedInterests.insert(interest)
         }
     }
-}
-
-struct Interest: Identifiable {
-    let id = UUID()
-    let name: String
-    let icon: String
-    let color: Color
 }
 
 struct InterestCard: View {
@@ -128,13 +121,13 @@ struct InterestCard: View {
 
                 Text(interest.name)
                     .font(.system(size: 16, weight: isSelected ? .semibold : .medium))
-                    .foregroundColor(isSelected ? .primary : .secondary)
+                    .foregroundColor(isSelected ? .white : .gray)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                    .fill(Color(white: 0.15))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(isSelected ? interest.color : Color.clear, lineWidth: 2)

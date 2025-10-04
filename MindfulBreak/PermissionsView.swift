@@ -25,7 +25,7 @@ struct PermissionsView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground)
+            Color.black
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -33,11 +33,11 @@ struct PermissionsView: View {
                 VStack(spacing: 8) {
                     Text("Final Setup")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
 
                     Text("Enable notifications to get notified when apps are blocked")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
@@ -61,10 +61,10 @@ struct PermissionsView: View {
                 }) {
                     Text("Complete Setup")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.green)
+                        .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                         .cornerRadius(12)
                 }
                 .padding(.horizontal, 16)
@@ -133,21 +133,22 @@ struct PermissionCard: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(isCompleted ? Color.green : Color.blue.opacity(0.2))
+                        .fill(isCompleted ? Color.green : Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.3))
                         .frame(width: 50, height: 50)
 
                     Image(systemName: isCompleted ? "checkmark" : icon)
                         .font(.system(size: 24))
-                        .foregroundColor(isCompleted ? .white : .blue)
+                        .foregroundColor(isCompleted ? .white : Color(red: 0.55, green: 0.5, blue: 0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
 
                     Text(description)
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
 
                 Spacer()
@@ -165,17 +166,17 @@ struct PermissionCard: View {
                         }
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                     .cornerRadius(10)
                 }
                 .disabled(isLoading)
             }
         }
         .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color(white: 0.15))
         .cornerRadius(16)
     }
 }
@@ -189,21 +190,22 @@ struct ShortcutsSetupCard: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(isCompleted ? Color.green : Color.orange.opacity(0.2))
+                        .fill(isCompleted ? Color.green : Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.3))
                         .frame(width: 50, height: 50)
 
                     Image(systemName: isCompleted ? "checkmark" : "link")
                         .font(.system(size: 24))
-                        .foregroundColor(isCompleted ? .white : .orange)
+                        .foregroundColor(isCompleted ? .white : Color(red: 0.55, green: 0.5, blue: 0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Set Up Automations")
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
 
                     Text("Create shortcuts for each monitored app")
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
 
                 Spacer()
@@ -213,7 +215,7 @@ struct ShortcutsSetupCard: View {
                 VStack(spacing: 8) {
                     Text("Tap 'Set Up' for each app to create an automation in Shortcuts")
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                         .padding(.bottom, 8)
 
                     ForEach(apps) { app in
@@ -237,22 +239,22 @@ struct ShortcutsSetupCard: View {
                                     }
                                 }
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.black)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
-                                .background(Color.orange)
+                                .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                                 .cornerRadius(8)
                             }
                         }
                         .padding(12)
-                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .background(Color(white: 0.1))
                         .cornerRadius(8)
                     }
                 }
             }
         }
         .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color(white: 0.15))
         .cornerRadius(16)
     }
 
@@ -278,21 +280,22 @@ struct MonitoringPermissionCard: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(isEnabled ? Color.green : Color.purple.opacity(0.2))
+                        .fill(isEnabled ? Color.green : Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.3))
                         .frame(width: 50, height: 50)
 
                     Image(systemName: isEnabled ? "checkmark" : "clock.arrow.circlepath")
                         .font(.system(size: 24))
-                        .foregroundColor(isEnabled ? .white : .purple)
+                        .foregroundColor(isEnabled ? .white : Color(red: 0.55, green: 0.5, blue: 0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Activate Monitoring")
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
 
                     Text("Start 24/7 tracking of your selected apps")
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                 }
 
                 Spacer()
@@ -301,16 +304,16 @@ struct MonitoringPermissionCard: View {
             if !isEnabled {
                 Text("Mindful Break will monitor your app usage and automatically shield apps when you reach your daily limits. You can always adjust settings later.")
                     .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.gray)
                     .padding(.bottom, 8)
 
                 Button(action: onEnable) {
                     Text("Enable Monitoring")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.purple)
+                        .background(Color(red: 0.55, green: 0.5, blue: 0.7))
                         .cornerRadius(10)
                 }
             } else {
@@ -325,7 +328,7 @@ struct MonitoringPermissionCard: View {
             }
         }
         .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color(white: 0.15))
         .cornerRadius(16)
     }
 }

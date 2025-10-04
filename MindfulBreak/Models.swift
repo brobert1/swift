@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import FamilyControls
 import ManagedSettings
 
@@ -34,4 +35,11 @@ struct ChallengeTask: Identifiable, Codable {
     let description: String
     let type: TaskType
     let estimatedMinutes: Int
+}
+
+struct Interest: Identifiable {
+    let id = UUID()
+    let name: String
+    let icon: String
+    let color: Color
 }
