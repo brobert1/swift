@@ -35,7 +35,7 @@ struct PermissionsView: View {
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.primary)
 
-                    Text("Complete these steps to activate Mindful Break")
+                    Text("Enable notifications to get notified when apps are blocked")
                         .font(.system(size: 16))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -44,54 +44,37 @@ struct PermissionsView: View {
                 .padding(.top, 40)
                 .padding(.bottom, 32)
 
-                // Checklist
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Step 1: Screen Time
-                        PermissionCard(
-                            icon: "hourglass",
-                            title: "Enable Screen Time",
-                            description: "Grant permission to monitor and manage apps",
-                            isCompleted: screenTimeManager.isAuthorized,
-                            buttonText: screenTimeManager.isAuthorized ? "Granted" : "Enable",
-                            isLoading: isRequestingAuth
-                        ) {
-                            requestScreenTimeAuth()
-                        }
+                Spacer()
 
-                        // Step 2: Enable 24/7 Monitoring
-                        MonitoringPermissionCard(
-                            isEnabled: monitoringEnabled,
-                            onEnable: {
-                                enableMonitoring()
-                            }
-                        )
-
-                        // Step 3: Shortcuts Automation
-                        ShortcutsSetupCard(apps: selectedApps)
-
-                        // Step 4: Notifications
-                        NotificationPermissionCard()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 100)
+                // Notification Permission
+                VStack(spacing: 16) {
+                    NotificationPermissionCard()
                 }
+                .padding(.horizontal, 16)
 
                 Spacer()
 
                 // Continue button
-                Button(action: onContinue) {
+                Button(action: {
+                    enableMonitoring()
+                    onContinue()
+                }) {
                     Text("Complete Setup")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(allPermissionsGranted ? Color.green : Color.gray)
+                        .background(Color.green)
                         .cornerRadius(12)
                 }
-                .disabled(!allPermissionsGranted)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 32)
+            }
+        }
+        .onAppear {
+            // Auto-enable monitoring when view appears
+            if screenTimeManager.isAuthorized && !monitoringEnabled {
+                enableMonitoring()
             }
         }
         .alert("Error", isPresented: $showError) {

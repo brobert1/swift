@@ -35,7 +35,7 @@ struct StatusView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     // Header
                     VStack(spacing: 8) {
                         Text("Monitored Apps")
@@ -52,6 +52,7 @@ struct StatusView: View {
                         isMonitoring: dataStore.isMonitoringActive,
                         isShielded: screenTimeManager.areAppsShielded
                     )
+                    .padding(.horizontal, 16)
 
                     if dataStore.monitoredApps.isEmpty {
                         VStack(spacing: 16) {
@@ -72,10 +73,10 @@ struct StatusView: View {
                         // App cards with countdown timers
                         ForEach(dataStore.monitoredApps) { app in
                             AppCountdownCard(app: app)
+                                .padding(.horizontal, 16)
                         }
                     }
                 }
-                .padding(.horizontal, 16)
             }
             .background(Color(uiColor: .systemGroupedBackground))
         }
@@ -88,12 +89,12 @@ struct AppCountdownCard: View {
     @State private var showChallenge: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
                 // Real app icon
                 Label(app.token)
                     .labelStyle(.iconOnly)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 60, height: 60)
 
                 VStack(alignment: .leading, spacing: 4) {
                     // Real app name
@@ -104,7 +105,7 @@ struct AppCountdownCard: View {
                     HStack(spacing: 4) {
                         Image(systemName: isShielded ? "lock.shield.fill" : "hourglass")
                             .font(.system(size: 12))
-                        Text(isShielded ? "Limit Reached - Shielded" : "Monitoring Active")
+                        Text(isShielded ? "Limit Reached" : "Monitoring Active")
                             .font(.system(size: 14))
                     }
                     .foregroundColor(isShielded ? .red : .green)
@@ -112,59 +113,56 @@ struct AppCountdownCard: View {
 
                 Spacer()
 
-                // Daily limit
-                VStack(spacing: 4) {
+                // Daily limit badge
+                VStack(spacing: 2) {
                     Text("\(app.timeLimitInMinutes)")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.blue)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.primary)
                     Text("min limit")
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
             }
 
             // Info message
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "info.circle.fill")
                     .foregroundColor(.blue)
-                    .font(.system(size: 14))
+                    .font(.system(size: 16))
 
                 Text(isShielded ?
-                     "App is blocked. Complete a challenge to unlock." :
+                     "iOS is tracking usage. Will shield when limit is reached." :
                      "iOS is tracking usage. Will shield when limit is reached.")
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
+                    .lineLimit(2)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(8)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.blue.opacity(0.08))
+            .cornerRadius(10)
 
             if isShielded {
-                // Unlock button - shows challenge
+                // Minimalist unlock button
                 Button(action: {
                     showChallenge = true
                 }) {
-                    HStack {
-                        Image(systemName: "star.fill")
-                        Text("Complete Challenge to Unlock")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.purple, Color.blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                    Text("Complete a challenge")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
                         )
-                    )
-                    .cornerRadius(10)
                 }
             }
         }
         .padding(16)
+        .frame(maxWidth: .infinity)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(16)
         .onAppear {
@@ -286,11 +284,11 @@ struct MonitoringStatusCard: View {
             // Status Icon
             ZStack {
                 Circle()
-                    .fill(statusColor.opacity(0.2))
-                    .frame(width: 50, height: 50)
+                    .fill(statusColor.opacity(0.15))
+                    .frame(width: 60, height: 60)
 
                 Image(systemName: statusIcon)
-                    .font(.system(size: 24))
+                    .font(.system(size: 26))
                     .foregroundColor(statusColor)
             }
 
@@ -311,10 +309,10 @@ struct MonitoringStatusCard: View {
                 .fill(isMonitoring ? Color.green : Color.gray)
                 .frame(width: 12, height: 12)
         }
-        .padding(20)
+        .padding(16)
+        .frame(maxWidth: .infinity)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(16)
-        .padding(.horizontal, 16)
     }
 
     private var statusColor: Color {
