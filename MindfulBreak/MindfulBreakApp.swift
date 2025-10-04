@@ -52,7 +52,15 @@ struct MindfulBreakApp: App {
                 
                 appDelegate.showChallengeHandler = { appId in
                     print("🎯 [APP] Challenge handler called with appId: \(appId)")
-                    DispatchQueue.main.async {
+
+                    // Dismiss intent prompt if it's showing
+                    if self.showIntentPrompt {
+                        print("   Dismissing intent prompt first")
+                        self.showIntentPrompt = false
+                        self.promptAppId = nil
+                    }
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         self.challengeAppId = appId
                         self.showChallenge = true
                     }

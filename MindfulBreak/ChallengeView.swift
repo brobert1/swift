@@ -55,33 +55,19 @@ struct ChallengeView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
     @StateObject private var dataStore = DataStore.shared
+    @StateObject private var aiGenerator = AIChallengeGenerator.shared
     @State private var showSuccess = false
-    @State private var selectedChallenge: ChallengeType
-    
+    @State private var selectedChallenge: ChallengeType?
+    @State private var aiChallenge: AIChallenge?
+    @State private var isLoadingAIChallenge = true
+    @State private var useAIChallenge = true // Toggle for AI vs hardcoded
+
     let app: MonitoredApp
     let onComplete: () -> Void
-    
+
     init(app: MonitoredApp, onComplete: @escaping () -> Void) {
         self.app = app
         self.onComplete = onComplete
-
-        // Select random challenge, avoiding the last one shown
-        var randomChallenge: ChallengeType
-
-        if let lastChallengeRaw = UserDefaults.standard.object(forKey: "lastChallengeIndex") as? Int,
-           let lastChallenge = ChallengeType(rawValue: lastChallengeRaw) {
-            // Avoid showing the same challenge twice in a row
-            let availableChallenges = ChallengeType.allCases.filter { $0 != lastChallenge }
-            randomChallenge = availableChallenges.randomElement() ?? .breathing
-        } else {
-            // First time - select any random challenge
-            randomChallenge = ChallengeType.allCases.randomElement() ?? .breathing
-        }
-
-        _selectedChallenge = State(initialValue: randomChallenge)
-
-        // Save for next time
-        UserDefaults.standard.set(randomChallenge.rawValue, forKey: "lastChallengeIndex")
     }
     
     var unlockTimeDisplay: String {
@@ -99,56 +85,193 @@ struct ChallengeView: View {
         ZStack {
             Color.black
                 .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.2))
-                            .frame(width: 80, height: 80)
-                        
-                        Image(systemName: selectedChallenge.icon)
-                            .font(.system(size: 40))
-                            .foregroundColor(Color(red: 0.55, green: 0.5, blue: 0.7))
-                    }
-                    
-                    Text(selectedChallenge.title)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text(selectedChallenge.description)
+
+            if isLoadingAIChallenge {
+                // Loading state
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(Color(red: 0.55, green: 0.5, blue: 0.7))
+
+                    Text("Generating your personalized challenge...")
                         .font(.system(size: 16))
                         .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
                 }
-                .padding(.top, 40)
-                .padding(.bottom, 24)
-                
-                // Challenge content
-                Group {
-                    switch selectedChallenge {
-                    case .breathing:
-                        BreathingChallengeView(onComplete: completeChallenge)
-                    case .gratitude:
-                        GratitudeChallengeView(onComplete: completeChallenge)
-                    case .eyeRest:
-                        EyeRestChallengeView(onComplete: completeChallenge)
-                    case .intention:
-                        IntentionChallengeView(onComplete: completeChallenge)
-                    case .movement:
-                        MovementChallengeView(onComplete: completeChallenge)
-                    case .reading:
-                        ReadingChallengeView(onComplete: completeChallenge)
+                .onAppear {
+                    print("🔄 VIEW: Showing loading state")
+                }
+            } else if let aiChallenge = aiChallenge, useAIChallenge {
+                // AI-generated challenge
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(spacing: 12) {
+                        Text(aiChallenge.title)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                    .padding(.top, 40)
+                    .padding(.bottom, 24)
+
+                    // AI Challenge content
+                    DynamicChallengeView(challenge: aiChallenge, onComplete: completeChallenge)
+                }
+                .onAppear {
+                    print("✨ VIEW: Showing AI challenge: \(aiChallenge.title)")
+                }
+            } else if let selectedChallenge = selectedChallenge {
+                // Fallback to hardcoded challenges
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.55, green: 0.5, blue: 0.7).opacity(0.2))
+                                .frame(width: 80, height: 80)
+
+                            Image(systemName: selectedChallenge.icon)
+                                .font(.system(size: 40))
+                                .foregroundColor(Color(red: 0.55, green: 0.5, blue: 0.7))
+                        }
+
+                        Text(selectedChallenge.title)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.white)
+
+                        Text(selectedChallenge.description)
+                            .font(.system(size: 16))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                    .padding(.top, 40)
+                    .padding(.bottom, 24)
+
+                    // Challenge content
+                    Group {
+                        switch selectedChallenge {
+                        case .breathing:
+                            BreathingChallengeView(onComplete: completeChallenge)
+                        case .gratitude:
+                            GratitudeChallengeView(onComplete: completeChallenge)
+                        case .eyeRest:
+                            EyeRestChallengeView(onComplete: completeChallenge)
+                        case .intention:
+                            IntentionChallengeView(onComplete: completeChallenge)
+                        case .movement:
+                            MovementChallengeView(onComplete: completeChallenge)
+                        case .reading:
+                            ReadingChallengeView(onComplete: completeChallenge)
+                        }
                     }
                 }
+                .onAppear {
+                    print("⚠️ VIEW: Showing hardcoded challenge: \(selectedChallenge.title)")
+                }
+            } else {
+                Text("No challenge available")
+                    .foregroundColor(.white)
+                    .onAppear {
+                        print("❌ VIEW: No challenge to show!")
+                        print("   aiChallenge: \(aiChallenge?.title ?? "nil")")
+                        print("   useAIChallenge: \(useAIChallenge)")
+                        print("   selectedChallenge: \(selectedChallenge?.title ?? "nil")")
+                        print("   isLoadingAIChallenge: \(isLoadingAIChallenge)")
+                    }
             }
-            
+
             if showSuccess {
                 SuccessOverlay(unlockTime: unlockTimeDisplay)
             }
         }
+        .task {
+            print("⏰ .task modifier called - loading challenge")
+            await loadChallenge()
+        }
+        .onAppear {
+            print("👁️ ChallengeView appeared")
+            print("   Initial state - aiChallenge: \(aiChallenge?.title ?? "nil")")
+            print("   Initial state - useAIChallenge: \(useAIChallenge)")
+            print("   Initial state - isLoadingAIChallenge: \(isLoadingAIChallenge)")
+        }
+    }
+
+    private func loadChallenge() async {
+        print("🚀 loadChallenge() started")
+        // Get recent challenge titles to avoid repetition
+        let recentTitles = getRecentChallengeTitles()
+
+        do {
+            // Try to generate AI challenge (will use cache if available, even without API key)
+            print("🤖 Attempting to load AI challenge...")
+            print("   User interests: \(dataStore.userInterests)")
+            print("   API configured: \(Config.isOpenAIConfigured)")
+
+            let challenge = try await aiGenerator.generateChallenge(
+                userInterests: dataStore.userInterests,
+                recentChallenges: recentTitles
+            )
+
+            print("📦 Received AI challenge: \(challenge.title)")
+            print("   Type: \(challenge.activityType)")
+            print("   Instructions: \(challenge.instructions.count)")
+
+            await MainActor.run {
+                print("🎯 Setting aiChallenge and useAIChallenge = true")
+                self.aiChallenge = challenge
+                self.useAIChallenge = true
+                self.isLoadingAIChallenge = false
+
+                // Save challenge title to recent history
+                saveRecentChallengeTitle(challenge.title)
+
+                print("   aiChallenge is now: \(self.aiChallenge?.title ?? "nil")")
+                print("   useAIChallenge is now: \(self.useAIChallenge)")
+                print("   isLoadingAIChallenge is now: \(self.isLoadingAIChallenge)")
+            }
+
+            print("✅ AI Challenge loaded: \(challenge.title)")
+        } catch {
+            print("❌ Failed to generate AI challenge: \(error.localizedDescription)")
+            print("   Error details: \(error)")
+
+            // Fallback to hardcoded challenge
+            await MainActor.run {
+                self.selectedChallenge = selectFallbackChallenge()
+                self.useAIChallenge = false
+                self.isLoadingAIChallenge = false
+            }
+        }
+    }
+
+    private func selectFallbackChallenge() -> ChallengeType {
+        // Select random challenge, avoiding the last one shown
+        if let lastChallengeRaw = UserDefaults.standard.object(forKey: "lastChallengeIndex") as? Int,
+           let lastChallenge = ChallengeType(rawValue: lastChallengeRaw) {
+            let availableChallenges = ChallengeType.allCases.filter { $0 != lastChallenge }
+            let randomChallenge = availableChallenges.randomElement() ?? .breathing
+            UserDefaults.standard.set(randomChallenge.rawValue, forKey: "lastChallengeIndex")
+            return randomChallenge
+        } else {
+            let randomChallenge = ChallengeType.allCases.randomElement() ?? .breathing
+            UserDefaults.standard.set(randomChallenge.rawValue, forKey: "lastChallengeIndex")
+            return randomChallenge
+        }
+    }
+
+    private func getRecentChallengeTitles() -> [String] {
+        if let titles = UserDefaults.standard.array(forKey: "recentChallengeTitles") as? [String] {
+            return Array(titles.prefix(3)) // Last 3 challenges
+        }
+        return []
+    }
+
+    private func saveRecentChallengeTitle(_ title: String) {
+        var titles = getRecentChallengeTitles()
+        titles.insert(title, at: 0)
+        titles = Array(titles.prefix(5)) // Keep last 5
+        UserDefaults.standard.set(titles, forKey: "recentChallengeTitles")
     }
     
     private func completeChallenge() {

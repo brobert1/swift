@@ -107,6 +107,11 @@ class DataStore: ObservableObject {
         userInterests = interests
         defaults.set(interests, forKey: Keys.userInterests)
         defaults.synchronize()
+
+        // Pre-generate AI challenges in background when interests are set
+        Task {
+            await AIChallengeGenerator.shared.preGenerateChallenges(userInterests: interests, count: 3)
+        }
     }
 
     func setMonitoringActive(_ active: Bool) {
