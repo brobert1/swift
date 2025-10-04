@@ -132,13 +132,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         completionHandler()
     }
-    
-    // Helper struct to decode monitored apps
-    private struct MonitoredAppCodable: Codable {
-        let id: String
-        let token: ApplicationToken
-        let timeLimitInMinutes: Int
-    }
 
     // Show notification even when app is in foreground
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
