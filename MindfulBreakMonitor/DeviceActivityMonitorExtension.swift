@@ -9,11 +9,15 @@ import DeviceActivity
 import FamilyControls
 import ManagedSettings
 import Foundation
+import UserNotifications
 
 class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     let store = ManagedSettingsStore()
     let appGroupDefaults = UserDefaults(suiteName: "group.com.developer.mindfullness.shared")
+
+    // Track app usage times
+    private var appUsageTimes: [String: TimeInterval] = [:]
 
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
@@ -23,12 +27,11 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         // Reset shields at start of day
         store.shield.applications = nil
 
-        // Reset usage data
-        appGroupDefaults?.removeObject(forKey: "appUsageData")
-        appGroupDefaults?.synchronize()
+        // Reset today's usage data at start of new day
+        resetDailyUsage()
 
         // Log to verify extension is running
-        logExtensionEvent("intervalDidStart")
+        logExtensionEvent("intervalDidStart - New day started")
     }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
@@ -41,17 +44,78 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
 
-        print("🛡️ [EXTENSION] Time limit reached for: \(event.rawValue)")
+        let appId = event.rawValue.replacingOccurrences(of: "limit_", with: "")
 
-        // The event already contains the app tokens that exceeded the limit
-        // iOS will automatically shield them, but we can also do it explicitly
+        print("🚨 [EXTENSION] LIMIT REACHED!")
+        print("   App ID: \(appId)")
+        print("   Event: \(event.rawValue)")
 
-        logExtensionEvent("eventDidReachThreshold: \(event.rawValue)")
+        logExtensionEvent("🛡️ LIMIT REACHED - Shielding app: \(appId)")
 
-        // Update app group to notify main app
+        // Load monitored apps to get the token
+        if let monitoredAppsData = appGroupDefaults?.data(forKey: "monitoredApps"),
+           let apps = try? JSONDecoder().decode([MonitoredAppCodable].self, from: monitoredAppsData) {
+
+            if let app = apps.first(where: { $0.id == appId }) {
+                // SHIELD THIS APP IMMEDIATELY
+                store.shield.applications = Set([app.token])
+
+                // Save that this app is shielded
+                appGroupDefaults?.set(true, forKey: "appShielded_\(appId)")
+                appGroupDefaults?.set(Date(), forKey: "appShieldedTime_\(appId)")
+
+                print("✅ [EXTENSION] SHIELDED app successfully!")
+                logExtensionEvent("✅ App shielded: \(appId)")
+
+                // Send notification to user
+                sendLimitReachedNotification(appId: appId)
+            } else {
+                print("❌ [EXTENSION] Could not find app with ID: \(appId)")
+                logExtensionEvent("❌ App not found: \(appId)")
+            }
+        } else {
+            print("❌ [EXTENSION] Could not load monitored apps data")
+            logExtensionEvent("❌ Failed to load monitored apps")
+        }
+
+        // Notify main app
         appGroupDefaults?.set(true, forKey: "appsAreShielded")
         appGroupDefaults?.set(Date(), forKey: "lastShieldTime")
         appGroupDefaults?.synchronize()
+    }
+
+    private func sendLimitReachedNotification(appId: String) {
+        let center = UNUserNotificationCenter.current()
+
+        let content = UNMutableNotificationContent()
+        content.title = "⏰ Time's Up!"
+        content.body = "You've reached your daily limit. Tap to complete a challenge and unlock 1 more minute."
+        content.sound = .default
+        content.categoryIdentifier = "CHALLENGE_UNLOCK"
+        content.userInfo = ["appId": appId]
+
+        // Trigger immediately
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "limit_reached_\(appId)",
+            content: content,
+            trigger: trigger
+        )
+
+        center.add(request) { error in
+            if let error = error {
+                print("❌ [EXTENSION] Failed to send notification: \(error)")
+            } else {
+                print("📬 [EXTENSION] Notification sent!")
+            }
+        }
+    }
+
+    // Helper struct to decode monitored apps
+    private struct MonitoredAppCodable: Codable {
+        let id: String
+        let token: ApplicationToken
+        let timeLimitInMinutes: Int
     }
 
     override func intervalWillStartWarning(for activity: DeviceActivityName) {
@@ -93,5 +157,27 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
         appGroupDefaults?.set(logs, forKey: "extensionLogs")
         appGroupDefaults?.synchronize()
+    }
+
+    private func resetDailyUsage() {
+        // Reset all usage counters for new day
+        guard let defaults = appGroupDefaults else { return }
+
+        // Load monitored apps to know what to reset
+        if let monitoredAppsData = defaults.data(forKey: "monitoredApps"),
+           let apps = try? JSONDecoder().decode([MonitoredAppCodable].self, from: monitoredAppsData) {
+
+            for app in apps {
+                defaults.removeObject(forKey: "usage_\(app.id)")
+            }
+        }
+
+        // Reset global usage tracking
+        defaults.removeObject(forKey: "todaysTotalUsage")
+        defaults.removeObject(forKey: "appStartTimes")
+        defaults.set(Date(), forKey: "lastResetDate")
+        defaults.synchronize()
+
+        print("🔄 [EXTENSION] Reset daily usage data")
     }
 }

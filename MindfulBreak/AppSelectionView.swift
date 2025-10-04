@@ -179,7 +179,7 @@ struct AppSelectionView: View {
             let app = MonitoredApp(
                 id: appId,
                 token: token,
-                timeLimitInMinutes: 60,
+                timeLimitInMinutes: 1, // Set to 1 minute for testing
                 isEnabled: true
             )
             apps.append(app)

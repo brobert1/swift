@@ -68,9 +68,7 @@ struct OnboardingContainerView: View {
                 .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
 
             case .permissions:
-                PermissionsView(
-                    selectedApps: coordinator.selectedApps
-                ) {
+                PermissionsView {
                     coordinator.nextStep()
                 }
                 .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))

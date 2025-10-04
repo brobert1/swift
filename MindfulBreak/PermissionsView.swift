@@ -16,8 +16,12 @@ struct PermissionsView: View {
     @State private var errorMessage = ""
     @State private var monitoringEnabled = false
 
-    var selectedApps: [MonitoredApp]
     var onContinue: () -> Void
+
+    // Get apps from DataStore instead of coordinator
+    private var selectedApps: [MonitoredApp] {
+        dataStore.monitoredApps
+    }
 
     var body: some View {
         ZStack {
@@ -121,10 +125,14 @@ struct PermissionsView: View {
             return
         }
 
-        // Start monitoring with the selected apps
+        // Start DeviceActivity monitoring with thresholds
+        // This monitors REAL iOS usage and shields apps when limits are reached
         screenTimeManager.startMonitoring(for: selectedApps)
         dataStore.setMonitoringActive(true)
         monitoringEnabled = true
+
+        print("✅ Started monitoring \(selectedApps.count) apps with DeviceActivity")
+        print("   Apps will be shielded when they reach their daily limits")
     }
 }
 
@@ -379,8 +387,5 @@ struct NotificationPermissionCard: View {
 }
 
 #Preview {
-    PermissionsView(
-        selectedApps: [],
-        onContinue: {}
-    )
+    PermissionsView(onContinue: {})
 }

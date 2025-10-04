@@ -92,7 +92,11 @@ class ScreenTimeManager: ObservableObject {
             return
         }
 
-        // Create a daily schedule (repeats every day)
+        // Stop any existing monitoring first
+        stopMonitoring()
+
+        // Create a DAILY schedule (midnight to midnight)
+        // This tracks usage for the entire day
         let schedule = DeviceActivitySchedule(
             intervalStart: DateComponents(hour: 0, minute: 0),
             intervalEnd: DateComponents(hour: 23, minute: 59),
@@ -105,24 +109,25 @@ class ScreenTimeManager: ObservableObject {
         for app in enabledApps {
             let eventName = DeviceActivityEvent.Name("limit_\(app.id)")
 
-            // Create event that triggers when time limit is reached
+            // This event fires when the app's CUMULATIVE DAILY USAGE reaches the limit
+            // iOS tracks the actual time spent in the app
             let event = DeviceActivityEvent(
                 applications: [app.token],
                 threshold: DateComponents(minute: app.timeLimitInMinutes)
             )
 
             events[eventName] = event
-            print("📊 Set threshold: \(app.timeLimitInMinutes) min for app \(app.id)")
+            print("📊 Monitoring: \(app.timeLimitInMinutes) min daily limit")
         }
 
-        // Set up monitoring with events
+        // Start monitoring
         do {
             try activityCenter.startMonitoring(dailyActivityName, during: schedule, events: events)
             activeSchedules.append(dailyActivityName)
-            print("✅ Started monitoring \(enabledApps.count) apps with automatic shielding")
 
-            // The DeviceActivityMonitor extension will automatically shield apps
-            // when their time limits are reached
+            print("✅ DeviceActivity monitoring ACTIVE")
+            print("   📱 iOS will track real usage")
+            print("   🛡️  Apps will shield when limits are reached")
 
         } catch {
             print("❌ Failed to start monitoring: \(error.localizedDescription)")
