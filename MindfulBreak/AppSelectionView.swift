@@ -110,8 +110,11 @@ struct AppSelectionView: View {
             isPresented: $isPickerPresented,
             selection: $selectedAppsForPicker
         )
-        .onChange(of: selectedAppsForPicker) { newSelection in
-            updateMonitoredApps(from: newSelection)
+        .onChange(of: isPickerPresented) { isPresented in
+            // Only update when picker is dismissed (goes from true to false)
+            if !isPresented {
+                updateMonitoredApps(from: selectedAppsForPicker)
+            }
         }
     }
 
