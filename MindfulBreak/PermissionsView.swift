@@ -10,9 +10,11 @@ import FamilyControls
 
 struct PermissionsView: View {
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
+    @StateObject private var dataStore = DataStore.shared
     @State private var isRequestingAuth = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var monitoringEnabled = false
 
     var selectedApps: [MonitoredApp]
     var onContinue: () -> Void
@@ -53,10 +55,18 @@ struct PermissionsView: View {
                             requestScreenTimeAuth()
                         }
 
-                        // Step 2: Shortcuts Automation
+                        // Step 2: Enable 24/7 Monitoring
+                        MonitoringPermissionCard(
+                            isEnabled: monitoringEnabled,
+                            onEnable: {
+                                enableMonitoring()
+                            }
+                        )
+
+                        // Step 3: Shortcuts Automation
                         ShortcutsSetupCard(apps: selectedApps)
 
-                        // Step 3: Notifications
+                        // Step 4: Notifications
                         NotificationPermissionCard()
                     }
                     .padding(.horizontal, 16)
@@ -88,7 +98,7 @@ struct PermissionsView: View {
     }
 
     private var allPermissionsGranted: Bool {
-        screenTimeManager.isAuthorized
+        screenTimeManager.isAuthorized && monitoringEnabled
     }
 
     private func requestScreenTimeAuth() {
@@ -102,6 +112,19 @@ struct PermissionsView: View {
             }
             isRequestingAuth = false
         }
+    }
+
+    private func enableMonitoring() {
+        guard screenTimeManager.isAuthorized else {
+            errorMessage = "Please enable Screen Time first"
+            showError = true
+            return
+        }
+
+        // Start monitoring with the selected apps
+        screenTimeManager.startMonitoring(for: selectedApps)
+        dataStore.setMonitoringActive(true)
+        monitoringEnabled = true
     }
 }
 
@@ -252,6 +275,67 @@ struct ShortcutsSetupCard: View {
         if let url = URL(string: "shortcuts://") {
             UIApplication.shared.open(url)
         }
+    }
+}
+
+struct MonitoringPermissionCard: View {
+    let isEnabled: Bool
+    let onEnable: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(isEnabled ? Color.green : Color.purple.opacity(0.2))
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: isEnabled ? "checkmark" : "clock.arrow.circlepath")
+                        .font(.system(size: 24))
+                        .foregroundColor(isEnabled ? .white : .purple)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Activate Monitoring")
+                        .font(.system(size: 18, weight: .semibold))
+
+                    Text("Start 24/7 tracking of your selected apps")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+            }
+
+            if !isEnabled {
+                Text("Mindful Break will monitor your app usage and automatically shield apps when you reach your daily limits. You can always adjust settings later.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 8)
+
+                Button(action: onEnable) {
+                    Text("Enable Monitoring")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.purple)
+                        .cornerRadius(10)
+                }
+            } else {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("24/7 monitoring is active")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.green)
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(20)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(16)
     }
 }
 

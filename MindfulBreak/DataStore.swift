@@ -7,6 +7,31 @@
 
 import Foundation
 import FamilyControls
+import ManagedSettings
+
+/// Codable wrapper for MonitoredApp
+struct MonitoredAppCodable: Codable {
+    let id: String
+    let token: ApplicationToken
+    let timeLimitInMinutes: Int
+    let isEnabled: Bool
+
+    init(from app: MonitoredApp) {
+        self.id = app.id
+        self.token = app.token
+        self.timeLimitInMinutes = app.timeLimitInMinutes
+        self.isEnabled = app.isEnabled
+    }
+
+    func toMonitoredApp() -> MonitoredApp {
+        return MonitoredApp(
+            id: id,
+            token: token,
+            timeLimitInMinutes: timeLimitInMinutes,
+            isEnabled: isEnabled
+        )
+    }
+}
 
 /// Manages persistent storage for monitored apps and user preferences
 @MainActor
@@ -54,23 +79,28 @@ class DataStore: ObservableObject {
             userInterests = interests
         }
 
-        // Note: MonitoredApps with ApplicationToken cannot be easily serialized
-        // In production, you'd store app identifiers and recreate tokens
-        // For now, we'll manage them in memory during app session
+        // Load monitored apps
+        if let data = defaults.data(forKey: Keys.monitoredApps),
+           let decoded = try? JSONDecoder().decode([MonitoredAppCodable].self, from: data) {
+            monitoredApps = decoded.map { $0.toMonitoredApp() }
+            print("✅ Loaded \(monitoredApps.count) monitored apps from storage")
+        }
     }
 
     // MARK: - Save Data
 
     func saveMonitoredApps(_ apps: [MonitoredApp]) {
         monitoredApps = apps
-        // Store app metadata (without tokens, as they can't be serialized)
-        let appData = apps.map { [
-            "id": $0.id,
-            "timeLimitInMinutes": $0.timeLimitInMinutes,
-            "isEnabled": $0.isEnabled
-        ] as [String : Any] }
-        defaults.set(appData, forKey: Keys.monitoredApps)
-        defaults.synchronize()
+        // Encode apps with ApplicationToken (which is Codable)
+        let codableApps = apps.map { MonitoredAppCodable(from: $0) }
+
+        if let encoded = try? JSONEncoder().encode(codableApps) {
+            defaults.set(encoded, forKey: Keys.monitoredApps)
+            defaults.synchronize()
+            print("✅ Saved \(apps.count) monitored apps to storage")
+        } else {
+            print("❌ Failed to encode monitored apps")
+        }
     }
 
     func saveInterests(_ interests: [String]) {

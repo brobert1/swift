@@ -174,7 +174,8 @@ struct AppSelectionView: View {
         var apps: [MonitoredApp] = []
 
         for token in selection.applicationTokens {
-            let appId = token.hashValue.description
+            // Use UUID for unique ID since hashValue can collide
+            let appId = UUID().uuidString
             let app = MonitoredApp(
                 id: appId,
                 token: token,

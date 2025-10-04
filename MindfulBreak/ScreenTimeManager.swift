@@ -99,14 +99,30 @@ class ScreenTimeManager: ObservableObject {
             repeats: true
         )
 
-        // Set up monitoring
-        do {
-            try activityCenter.startMonitoring(dailyActivityName, during: schedule)
-            activeSchedules.append(dailyActivityName)
-            print("✅ Started monitoring \(enabledApps.count) apps")
+        // Create threshold events for each app
+        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
 
-            // Note: Actual threshold events and shielding happen in DeviceActivityMonitor extension
-            // The extension will call shieldApps() when limits are reached
+        for app in enabledApps {
+            let eventName = DeviceActivityEvent.Name("limit_\(app.id)")
+
+            // Create event that triggers when time limit is reached
+            let event = DeviceActivityEvent(
+                applications: [app.token],
+                threshold: DateComponents(minute: app.timeLimitInMinutes)
+            )
+
+            events[eventName] = event
+            print("📊 Set threshold: \(app.timeLimitInMinutes) min for app \(app.id)")
+        }
+
+        // Set up monitoring with events
+        do {
+            try activityCenter.startMonitoring(dailyActivityName, during: schedule, events: events)
+            activeSchedules.append(dailyActivityName)
+            print("✅ Started monitoring \(enabledApps.count) apps with automatic shielding")
+
+            // The DeviceActivityMonitor extension will automatically shield apps
+            // when their time limits are reached
 
         } catch {
             print("❌ Failed to start monitoring: \(error.localizedDescription)")

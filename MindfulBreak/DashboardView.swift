@@ -31,6 +31,7 @@ struct DashboardView: View {
 struct StatusView: View {
     @StateObject private var screenTimeManager = ScreenTimeManager.shared
     @StateObject private var dataStore = DataStore.shared
+    @StateObject private var usageManager = UsageDataManager.shared
 
     var body: some View {
         NavigationStack {
@@ -47,21 +48,10 @@ struct StatusView: View {
                     }
                     .padding(.top, 20)
 
-                    // Monitoring Control Card
-                    MonitoringControlCard(
+                    // Monitoring Status Card
+                    MonitoringStatusCard(
                         isMonitoring: dataStore.isMonitoringActive,
-                        isShielded: screenTimeManager.areAppsShielded,
-                        onStartMonitoring: {
-                            screenTimeManager.startMonitoring(for: dataStore.monitoredApps)
-                            dataStore.setMonitoringActive(true)
-                        },
-                        onStopMonitoring: {
-                            screenTimeManager.stopMonitoring()
-                            dataStore.setMonitoringActive(false)
-                        },
-                        onToggleShield: {
-                            screenTimeManager.toggleShield(for: dataStore.monitoredApps)
-                        }
+                        isShielded: screenTimeManager.areAppsShielded
                     )
 
                     if dataStore.monitoredApps.isEmpty {
@@ -80,9 +70,12 @@ struct StatusView: View {
                         }
                         .padding(.top, 100)
                     } else {
-                        // App cards
+                        // App cards with real usage data
                         ForEach(dataStore.monitoredApps) { app in
-                            AppUsageCard(app: app)
+                            AppUsageCard(
+                                app: app,
+                                usedMinutes: usageManager.getUsageInMinutes(for: app.id)
+                            )
                         }
                     }
                 }
@@ -95,7 +88,7 @@ struct StatusView: View {
 
 struct AppUsageCard: View {
     let app: MonitoredApp
-    @State private var usedMinutes: Int = Int.random(in: 0...60)
+    let usedMinutes: Int
 
     var progress: Double {
         Double(usedMinutes) / Double(app.timeLimitInMinutes)
@@ -154,9 +147,79 @@ struct AppUsageCard: View {
 }
 
 struct SettingsView: View {
+    @StateObject private var screenTimeManager = ScreenTimeManager.shared
+    @StateObject private var dataStore = DataStore.shared
+    @State private var extensionLogs: [String] = []
+
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("24/7 Monitoring")
+                                .font(.system(size: 16, weight: .medium))
+                            Text(dataStore.isMonitoringActive ? "Active" : "Paused")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Toggle("", isOn: .init(
+                            get: { dataStore.isMonitoringActive },
+                            set: { newValue in
+                                if newValue {
+                                    screenTimeManager.startMonitoring(for: dataStore.monitoredApps)
+                                    dataStore.setMonitoringActive(true)
+                                } else {
+                                    screenTimeManager.stopMonitoring()
+                                    dataStore.setMonitoringActive(false)
+                                }
+                            }
+                        ))
+                    }
+                } header: {
+                    Text("Protection")
+                } footer: {
+                    Text("When enabled, apps will be automatically shielded when you reach your daily time limits.")
+                }
+
+                Section {
+                    HStack {
+                        Text("Extension Status")
+                            .font(.system(size: 16, weight: .medium))
+                        Spacer()
+                        Circle()
+                            .fill(extensionLogs.isEmpty ? Color.red : Color.green)
+                            .frame(width: 12, height: 12)
+                        Text(extensionLogs.isEmpty ? "Not Running" : "Active")
+                            .font(.system(size: 14))
+                            .foregroundColor(extensionLogs.isEmpty ? .red : .green)
+                    }
+
+                    if !extensionLogs.isEmpty {
+                        DisclosureGroup("Extension Logs (\(extensionLogs.count))") {
+                            ForEach(extensionLogs.reversed(), id: \.self) { log in
+                                Text(log)
+                                    .font(.system(size: 12).monospaced())
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    Button(action: loadExtensionLogs) {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                            Text("Refresh Extension Status")
+                        }
+                    }
+                } header: {
+                    Text("Debug")
+                } footer: {
+                    Text("Check if the DeviceActivityMonitor extension is running. Logs appear when monitoring events occur.")
+                }
+
                 Section("Monitored Apps") {
                     Text("Edit your monitored apps")
                         .foregroundColor(.blue)
@@ -177,75 +240,57 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .onAppear {
+                loadExtensionLogs()
+            }
+        }
+    }
+
+    private func loadExtensionLogs() {
+        if let appGroupDefaults = UserDefaults(suiteName: "group.com.developer.mindfullness.shared"),
+           let logs = appGroupDefaults.array(forKey: "extensionLogs") as? [String] {
+            extensionLogs = logs
+        } else {
+            extensionLogs = []
         }
     }
 }
 
-// MARK: - Monitoring Control Card
+// MARK: - Monitoring Status Card
 
-struct MonitoringControlCard: View {
+struct MonitoringStatusCard: View {
     let isMonitoring: Bool
     let isShielded: Bool
-    let onStartMonitoring: () -> Void
-    let onStopMonitoring: () -> Void
-    let onToggleShield: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Protection Status")
-                        .font(.system(size: 18, weight: .semibold))
-
-                    Text(statusText)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
+        HStack(spacing: 16) {
+            // Status Icon
+            ZStack {
                 Circle()
-                    .fill(isMonitoring ? Color.green : Color.gray)
-                    .frame(width: 12, height: 12)
+                    .fill(statusColor.opacity(0.2))
+                    .frame(width: 50, height: 50)
+
+                Image(systemName: statusIcon)
+                    .font(.system(size: 24))
+                    .foregroundColor(statusColor)
             }
 
-            Divider()
+            // Status Text
+            VStack(alignment: .leading, spacing: 4) {
+                Text(statusTitle)
+                    .font(.system(size: 18, weight: .semibold))
 
-            // Monitoring Toggle
-            HStack {
-                Text("Active Monitoring")
-                    .font(.system(size: 16))
-
-                Spacer()
-
-                Button(action: isMonitoring ? onStopMonitoring : onStartMonitoring) {
-                    Text(isMonitoring ? "Stop" : "Start")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .background(isMonitoring ? Color.red : Color.green)
-                        .cornerRadius(8)
-                }
+                Text(statusMessage)
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
             }
 
-            // Manual Shield Toggle (for testing)
-            HStack {
-                Text("Shield Apps Now")
-                    .font(.system(size: 16))
+            Spacer()
 
-                Spacer()
-
-                Button(action: onToggleShield) {
-                    Text(isShielded ? "Unshield" : "Shield")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .background(isShielded ? Color.orange : Color.blue)
-                        .cornerRadius(8)
-                }
-            }
+            // Status Indicator
+            Circle()
+                .fill(isMonitoring ? Color.green : Color.gray)
+                .frame(width: 12, height: 12)
         }
         .padding(20)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
@@ -253,15 +298,43 @@ struct MonitoringControlCard: View {
         .padding(.horizontal, 16)
     }
 
-    private var statusText: String {
-        if isMonitoring && isShielded {
-            return "Monitoring active, apps shielded"
+    private var statusColor: Color {
+        if isShielded {
+            return .orange
         } else if isMonitoring {
-            return "Monitoring active"
-        } else if isShielded {
-            return "Apps shielded, monitoring inactive"
+            return .green
         } else {
-            return "Protection inactive"
+            return .gray
+        }
+    }
+
+    private var statusIcon: String {
+        if isShielded {
+            return "shield.lefthalf.filled"
+        } else if isMonitoring {
+            return "clock.arrow.circlepath"
+        } else {
+            return "pause.circle"
+        }
+    }
+
+    private var statusTitle: String {
+        if isShielded {
+            return "Apps Shielded"
+        } else if isMonitoring {
+            return "Monitoring Active"
+        } else {
+            return "Monitoring Paused"
+        }
+    }
+
+    private var statusMessage: String {
+        if isShielded {
+            return "Time limit reached - complete a challenge to unlock"
+        } else if isMonitoring {
+            return "Tracking your app usage 24/7"
+        } else {
+            return "Enable monitoring in Settings to start tracking"
         }
     }
 }
