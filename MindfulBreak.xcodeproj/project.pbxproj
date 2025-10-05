@@ -10,6 +10,7 @@
 		55CAB4C52E9139CC00E9DFF8 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55CAB4C42E9139CB00E9DFF8 /* DeviceActivity.framework */; };
 		55CAB4CD2E9139CC00E9DFF8 /* MindfulBreakMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55CAB4C22E9139CB00E9DFF8 /* MindfulBreakMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55CAB4E32E91852500E9DFF8 /* Assets.xcassets */; };
+		AA0022 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB0022 /* Config.plist */; };
 		AA0001 /* MindfulBreakApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001 /* MindfulBreakApp.swift */; };
 		AA0002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002 /* Models.swift */; };
 		AA0003 /* ScreenTimeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003 /* ScreenTimeManager.swift */; };
@@ -76,7 +77,8 @@
 		BB0015 /* DynamicChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicChallengeView.swift; sourceTree = "<group>"; };
 		BB0016 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		BB0020 /* ChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeView.swift; sourceTree = "<group>"; };
-		BB0021 /* IntentPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentPromptView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
+		BB0021 /* IntentPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentPromptView.swift; sourceTree = "<group>"; };
+		BB0022 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		55CAB4D12E9139CC00E9DFF8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
@@ -151,6 +153,7 @@
 				BB0008 /* OnboardingCompleteView.swift */,
 				BB0009 /* OnboardingCoordinator.swift */,
 				BB0010 /* DashboardView.swift */,
+				BB0022 /* Config.plist */,
 				55CAB4E32E91852500E9DFF8 /* Assets.xcassets */,
 			);
 			path = MindfulBreak;
@@ -259,6 +262,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */,
+				AA0022 /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
