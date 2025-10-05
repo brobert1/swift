@@ -49,11 +49,13 @@ class DataStore: ObservableObject {
         static let userInterests = "userInterests"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let isMonitoringActive = "isMonitoringActive"
+        static let isTestingMode = "isTestingMode"
     }
 
     @Published var monitoredApps: [MonitoredApp] = []
     @Published var userInterests: [String] = []
     @Published var isMonitoringActive: Bool = false
+    @Published var isTestingMode: Bool = true // Default to testing mode (1 min)
 
     private init() {
         // Use App Group UserDefaults for sharing with extension
@@ -73,6 +75,13 @@ class DataStore: ObservableObject {
     private func loadData() {
         // Load monitoring state
         isMonitoringActive = defaults.bool(forKey: Keys.isMonitoringActive)
+
+        // Load testing mode (defaults to true if not set)
+        if defaults.object(forKey: Keys.isTestingMode) != nil {
+            isTestingMode = defaults.bool(forKey: Keys.isTestingMode)
+        } else {
+            isTestingMode = true // Default to testing mode
+        }
 
         // Load interests
         if let interests = defaults.array(forKey: Keys.userInterests) as? [String] {
@@ -107,6 +116,13 @@ class DataStore: ObservableObject {
         userInterests = interests
         defaults.set(interests, forKey: Keys.userInterests)
         defaults.synchronize()
+
+        // Clear old cached challenges since interests changed
+        Task { @MainActor in
+            AIChallengeGenerator.shared.clearCache()
+            // Pre-generate AI challenges in background when interests are set
+            await AIChallengeGenerator.shared.preGenerateChallenges(userInterests: interests, count: 3)
+        }
     }
 
     func setMonitoringActive(_ active: Bool) {
@@ -120,9 +136,25 @@ class DataStore: ObservableObject {
         defaults.synchronize()
     }
 
+    func setTestingMode(_ enabled: Bool) {
+        isTestingMode = enabled
+        defaults.set(enabled, forKey: Keys.isTestingMode)
+        defaults.synchronize()
+        print("⚙️ Testing mode \(enabled ? "enabled" : "disabled") - unlock time: \(enabled ? "1 min" : "15 mins")")
+
+        // Clear cached challenges when toggling mode
+        Task { @MainActor in
+            AIChallengeGenerator.shared.clearCache()
+        }
+    }
+
     // MARK: - Helper Methods
 
     func getEnabledApps() -> [MonitoredApp] {
         return monitoredApps.filter { $0.isEnabled }
+    }
+
+    var unlockDurationMinutes: Int {
+        return isTestingMode ? 1 : 15
     }
 }

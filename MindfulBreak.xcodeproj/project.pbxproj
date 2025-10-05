@@ -10,6 +10,7 @@
 		55CAB4C52E9139CC00E9DFF8 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55CAB4C42E9139CB00E9DFF8 /* DeviceActivity.framework */; };
 		55CAB4CD2E9139CC00E9DFF8 /* MindfulBreakMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 55CAB4C22E9139CB00E9DFF8 /* MindfulBreakMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 55CAB4E32E91852500E9DFF8 /* Assets.xcassets */; };
+		AA0022 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB0022 /* Config.plist */; };
 		AA0001 /* MindfulBreakApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001 /* MindfulBreakApp.swift */; };
 		AA0002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002 /* Models.swift */; };
 		AA0003 /* ScreenTimeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003 /* ScreenTimeManager.swift */; };
@@ -22,7 +23,12 @@
 		AA0010 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0010 /* DashboardView.swift */; };
 		AA0011 /* DataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0011 /* DataStore.swift */; };
 		AA0012 /* UsageDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0012 /* UsageDataManager.swift */; };
-/* End PBXBuildFile section */
+		AA0013 /* AIChallengeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0013 /* AIChallengeModels.swift */; };
+		AA0014 /* AIChallengeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0014 /* AIChallengeGenerator.swift */; };
+		AA0015 /* DynamicChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0015 /* DynamicChallengeView.swift */; };
+		AA0016 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0016 /* Config.swift */; };
+		AA0020 /* ChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0020 /* ChallengeView.swift */; };
+		AA0021 /* IntentPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0021 /* IntentPromptView.swift */; };/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		55CAB4CB2E9139CC00E9DFF8 /* PBXContainerItemProxy */ = {
@@ -66,7 +72,13 @@
 		BB0011 /* DataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataStore.swift; sourceTree = "<group>"; };
 		BB0012 /* UsageDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageDataManager.swift; sourceTree = "<group>"; };
 		CC0001 /* MindfulBreak.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MindfulBreak.app; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
+		BB0013 /* AIChallengeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeModels.swift; sourceTree = "<group>"; };
+		BB0014 /* AIChallengeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeGenerator.swift; sourceTree = "<group>"; };
+		BB0015 /* DynamicChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicChallengeView.swift; sourceTree = "<group>"; };
+		BB0016 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		BB0020 /* ChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeView.swift; sourceTree = "<group>"; };
+		BB0021 /* IntentPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentPromptView.swift; sourceTree = "<group>"; };
+		BB0022 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		55CAB4D12E9139CC00E9DFF8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
@@ -128,6 +140,12 @@
 				BB0003 /* ScreenTimeManager.swift */,
 				BB0011 /* DataStore.swift */,
 				BB0012 /* UsageDataManager.swift */,
+				BB0013 /* AIChallengeModels.swift */,
+				BB0014 /* AIChallengeGenerator.swift */,
+				BB0015 /* DynamicChallengeView.swift */,
+				BB0016 /* Config.swift */,
+				BB0020 /* ChallengeView.swift */,
+				BB0021 /* IntentPromptView.swift */,
 				BB0004 /* WelcomeView.swift */,
 				BB0005 /* AppSelectionView.swift */,
 				BB0006 /* InterestSelectionView.swift */,
@@ -135,6 +153,7 @@
 				BB0008 /* OnboardingCompleteView.swift */,
 				BB0009 /* OnboardingCoordinator.swift */,
 				BB0010 /* DashboardView.swift */,
+				BB0022 /* Config.plist */,
 				55CAB4E32E91852500E9DFF8 /* Assets.xcassets */,
 			);
 			path = MindfulBreak;
@@ -243,6 +262,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55CAB4E42E91852500E9DFF8 /* Assets.xcassets in Resources */,
+				AA0022 /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +285,12 @@
 				AA0003 /* ScreenTimeManager.swift in Sources */,
 				AA0011 /* DataStore.swift in Sources */,
 				AA0012 /* UsageDataManager.swift in Sources */,
+				AA0013 /* AIChallengeModels.swift in Sources */,
+				AA0014 /* AIChallengeGenerator.swift in Sources */,
+				AA0015 /* DynamicChallengeView.swift in Sources */,
+				AA0016 /* Config.swift in Sources */,
+				AA0020 /* ChallengeView.swift in Sources */,
+				AA0021 /* IntentPromptView.swift in Sources */,
 				AA0004 /* WelcomeView.swift in Sources */,
 				AA0005 /* AppSelectionView.swift in Sources */,
 				AA0006 /* InterestSelectionView.swift in Sources */,

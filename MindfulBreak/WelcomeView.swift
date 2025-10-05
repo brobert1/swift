@@ -47,11 +47,11 @@ struct WelcomeView: View {
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
 
-                    Text("Turn mindless scrolling into mindful action")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
+//                    Text("Turn mindless scrolling into mindful action")
+//                        .font(.system(size: 18, weight: .medium))
+//                        .foregroundColor(.white.opacity(0.9))
+//                        .multilineTextAlignment(.center)
+//                        .padding(.horizontal, 40)
                 }
                 .padding(.bottom, 40)
 
