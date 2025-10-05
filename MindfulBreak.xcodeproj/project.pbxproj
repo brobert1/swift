@@ -25,7 +25,9 @@
 		AA0013 /* AIChallengeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0013 /* AIChallengeModels.swift */; };
 		AA0014 /* AIChallengeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0014 /* AIChallengeGenerator.swift */; };
 		AA0015 /* DynamicChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0015 /* DynamicChallengeView.swift */; };
-		AA0016 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0016 /* Config.swift */; };/* End PBXBuildFile section */
+		AA0016 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0016 /* Config.swift */; };
+		AA0020 /* ChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0020 /* ChallengeView.swift */; };
+		AA0021 /* IntentPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0021 /* IntentPromptView.swift */; };/* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		55CAB4CB2E9139CC00E9DFF8 /* PBXContainerItemProxy */ = {
@@ -72,7 +74,9 @@
 		BB0013 /* AIChallengeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeModels.swift; sourceTree = "<group>"; };
 		BB0014 /* AIChallengeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeGenerator.swift; sourceTree = "<group>"; };
 		BB0015 /* DynamicChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicChallengeView.swift; sourceTree = "<group>"; };
-		BB0016 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
+		BB0016 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		BB0020 /* ChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeView.swift; sourceTree = "<group>"; };
+		BB0021 /* IntentPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentPromptView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		55CAB4D12E9139CC00E9DFF8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
@@ -138,6 +142,8 @@
 				BB0014 /* AIChallengeGenerator.swift */,
 				BB0015 /* DynamicChallengeView.swift */,
 				BB0016 /* Config.swift */,
+				BB0020 /* ChallengeView.swift */,
+				BB0021 /* IntentPromptView.swift */,
 				BB0004 /* WelcomeView.swift */,
 				BB0005 /* AppSelectionView.swift */,
 				BB0006 /* InterestSelectionView.swift */,
@@ -279,6 +285,8 @@
 				AA0014 /* AIChallengeGenerator.swift in Sources */,
 				AA0015 /* DynamicChallengeView.swift in Sources */,
 				AA0016 /* Config.swift in Sources */,
+				AA0020 /* ChallengeView.swift in Sources */,
+				AA0021 /* IntentPromptView.swift in Sources */,
 				AA0004 /* WelcomeView.swift in Sources */,
 				AA0005 /* AppSelectionView.swift in Sources */,
 				AA0006 /* InterestSelectionView.swift in Sources */,

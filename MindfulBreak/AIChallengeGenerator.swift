@@ -29,7 +29,7 @@ class AIChallengeGenerator: ObservableObject {
 
     func generateChallenge(userInterests: [String], recentChallenges: [String] = []) async throws -> AIChallenge {
         // Check if we have cached challenges first (works even without API key)
-        if let cachedChallenge = getCachedChallenge(avoiding: recentChallenges) {
+        if let cachedChallenge = getCachedChallenge(avoiding: recentChallenges, matchingInterests: userInterests) {
             print("✅ Using cached AI challenge: \(cachedChallenge.title)")
             return cachedChallenge
         }
@@ -58,9 +58,11 @@ class AIChallengeGenerator: ObservableObject {
         let avoidString = recentChallenges.isEmpty ? "" : "\n\nAvoid these recent challenge types: \(recentChallenges.joined(separator: ", "))"
 
         return """
-        You are a mindfulness challenge creator for a screen time management app. Generate ONE unique, actionable challenge based on the user's interests.
+        You are a mindfulness challenge creator for a screen time management app. Generate ONE unique, actionable challenge that MUST match the user's interests.
 
         USER INTERESTS: \(interestsString)
+
+        IMPORTANT: You MUST choose a challenge category that matches one of the user's interests above. If the user selected "Fitness", generate a fitness challenge. If they selected "Reading", generate a reading challenge, etc.
 
         CHALLENGE CATEGORIES & EXAMPLES:
 
@@ -109,12 +111,13 @@ class AIChallengeGenerator: ObservableObject {
         \(avoidString)
 
         REQUIREMENTS:
-        1. Choose the activity type that best matches the user's interests
+        1. CRITICAL: The activityType MUST match one of the user's interests listed above (e.g., if user selected "Fitness", activityType must be "fitness")
         2. Make it SPECIFIC and ACTIONABLE (e.g., "10 pushups", not "do some exercise")
         3. Duration: 20-60 seconds for quick tasks, up to 5 minutes for reading/music
         4. Provide 3-5 clear step-by-step instructions
         5. Title should be motivating and clear (5-8 words)
         6. Description should explain the benefit (2-3 sentences)
+        7. The interestCategory in the JSON must exactly match one of: Fitness, Reading, Music, Mindfulness, Learning, Art, Nature, Cooking
 
         Return ONLY valid JSON in this exact format:
         {
@@ -219,19 +222,30 @@ class AIChallengeGenerator: ObservableObject {
         saveCachedChallenges()
     }
 
-    private func getCachedChallenge(avoiding recentTitles: [String]) -> AIChallenge? {
-        // Filter out recently shown challenges
+    private func getCachedChallenge(avoiding recentTitles: [String], matchingInterests userInterests: [String]) -> AIChallenge? {
+        // Filter out recently shown challenges AND ensure they match user interests
         let available = cachedChallenges.filter { challenge in
-            !recentTitles.contains(challenge.title)
+            // Must not be recently shown
+            guard !recentTitles.contains(challenge.title) else { return false }
+
+            // Must match at least one of the user's interests
+            let challengeCategory = challenge.interestCategory.lowercased()
+            let matchesInterests = userInterests.contains { interest in
+                interest.lowercased() == challengeCategory
+            }
+
+            return matchesInterests
         }
 
         if let challenge = available.randomElement() {
+            print("   ✅ Found cached challenge matching interests: \(challenge.interestCategory)")
             // Remove from cache so it's not shown again immediately
             cachedChallenges.removeAll { $0.id == challenge.id }
             saveCachedChallenges()
             return challenge
         }
 
+        print("   ⚠️ No cached challenges match user interests: \(userInterests.joined(separator: ", "))")
         return nil
     }
 
@@ -247,6 +261,14 @@ class AIChallengeGenerator: ObservableObject {
             cachedChallenges = decoded
             print("✅ Loaded \(cachedChallenges.count) cached AI challenges")
         }
+    }
+
+    // MARK: - Public Cache Management
+
+    func clearCache() {
+        cachedChallenges.removeAll()
+        UserDefaults.standard.removeObject(forKey: "cachedAIChallenges")
+        print("🗑️ Cleared all cached AI challenges from memory and storage")
     }
 }
 

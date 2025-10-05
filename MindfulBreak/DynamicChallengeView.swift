@@ -10,6 +10,7 @@ import SwiftUI
 struct DynamicChallengeView: View {
     let challenge: AIChallenge
     let onComplete: () -> Void
+    let unlockDuration: String // e.g., "15 minutes"
 
     @State private var currentStep = 0
     @State private var timeRemaining: Int
@@ -18,8 +19,9 @@ struct DynamicChallengeView: View {
 
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
-    init(challenge: AIChallenge, onComplete: @escaping () -> Void) {
+    init(challenge: AIChallenge, unlockDuration: String = "15 minutes", onComplete: @escaping () -> Void) {
         self.challenge = challenge
+        self.unlockDuration = unlockDuration
         self.onComplete = onComplete
         _timeRemaining = State(initialValue: challenge.estimatedSeconds)
     }
@@ -94,17 +96,25 @@ struct DynamicChallengeView: View {
 
             // Complete button (bottom)
             if hasStarted {
-                Button(action: onComplete) {
-                    Text(isComplete ? "Continue" : "Completing...")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isComplete ? .black : .gray)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(isComplete ? Color(red: 0.55, green: 0.5, blue: 0.7) : Color.gray.opacity(0.3))
-                        .cornerRadius(16)
+                VStack(spacing: 12) {
+                    // Timer info message
+                    Text("Unlock app for \(unlockDuration)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 20)
+
+                    Button(action: onComplete) {
+                        Text(isComplete ? "Continue" : "Completing...")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(isComplete ? .black : .gray)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(isComplete ? Color(red: 0.55, green: 0.5, blue: 0.7) : Color.gray.opacity(0.3))
+                            .cornerRadius(16)
+                    }
+                    .disabled(!isComplete)
+                    .padding(.horizontal, 20)
                 }
-                .disabled(!isComplete)
-                .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
         }

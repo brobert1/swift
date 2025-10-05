@@ -69,19 +69,15 @@ struct ChallengeView: View {
         self.app = app
         self.onComplete = onComplete
     }
-    
+
     var unlockTimeDisplay: String {
-        if app.timeLimitInMinutes < 60 {
-            return "\(app.timeLimitInMinutes) minute\(app.timeLimitInMinutes > 1 ? "s" : "")"
-        } else if app.timeLimitInMinutes < 1440 {
-            let hours = app.timeLimitInMinutes / 60
-            return "\(hours) hour\(hours > 1 ? "s" : "")"
-        } else {
-            return "24 hours"
-        }
+        let minutes = dataStore.unlockDurationMinutes
+        return minutes == 1 ? "1 minute" : "\(minutes) minutes"
     }
     
     var body: some View {
+        let _ = print("🎨 BODY RE-RENDER - isLoading: \(isLoadingAIChallenge), aiChallenge: \(aiChallenge?.title ?? "nil"), useAI: \(useAIChallenge), hardcoded: \(selectedChallenge?.title ?? "nil")")
+
         ZStack {
             Color.black
                 .ignoresSafeArea()
@@ -115,7 +111,7 @@ struct ChallengeView: View {
                     .padding(.bottom, 24)
 
                     // AI Challenge content
-                    DynamicChallengeView(challenge: aiChallenge, onComplete: completeChallenge)
+                    DynamicChallengeView(challenge: aiChallenge, unlockDuration: unlockTimeDisplay, onComplete: completeChallenge)
                 }
                 .onAppear {
                     print("✨ VIEW: Showing AI challenge: \(aiChallenge.title)")
@@ -290,8 +286,10 @@ struct ChallengeView: View {
             print("🔓 Cleared shield status for \(app.id)")
         }
 
-        // Schedule re-shield after the app's time limit (in seconds)
-        let unlockSeconds = TimeInterval(app.timeLimitInMinutes * 60)
+        // Schedule re-shield after cooldown period (1 min for testing, 15 min for production)
+        let cooldownMinutes = dataStore.unlockDurationMinutes
+        let unlockSeconds = TimeInterval(cooldownMinutes * 60)
+        print("⚙️ Testing mode: \(dataStore.isTestingMode)")
         print("⏱️ Will re-shield in \(unlockSeconds) seconds (\(unlockTimeDisplay))")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + unlockSeconds) {
